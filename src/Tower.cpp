@@ -15,11 +15,12 @@ bool Tower::isInRange(const Enemy& enemy) {
     return (dx*dx + dy*dy) <= (range * range);
 }
 
-void Tower::shoot(Enemy& target) {
-    target.takeDamage(1); // le baja 1 de vida
+void Tower::shoot(Enemy& target, std::vector<Projectile>& projectiles) {
+    Projectile projectile(x, y, &target);
+    projectiles.push_back(projectile);
 }
 
-void Tower::update(std::vector<Enemy>& enemies) {
+void Tower::update(std::vector<Enemy>& enemies, std::vector<Projectile>& projectiles) {
     if (fireCooldown > 0) {
         fireCooldown--;
         return;
@@ -27,7 +28,7 @@ void Tower::update(std::vector<Enemy>& enemies) {
 
     for (Enemy& e : enemies) {
         if (isInRange(e)) {
-            shoot(e);
+            shoot(e, projectiles);
             fireCooldown = fireRate;
             break; // dispara solo a uno por ciclo
         }

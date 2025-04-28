@@ -1,3 +1,0 @@
-/home/thedegeo/gitclone/Genetic-Kingdom/build/CMakeFiles/Genetic-Kingdom.dir
-/home/thedegeo/gitclone/Genetic-Kingdom/build/CMakeFiles/edit_cache.dir
-/home/thedegeo/gitclone/Genetic-Kingdom/build/CMakeFiles/rebuild_cache.dir
