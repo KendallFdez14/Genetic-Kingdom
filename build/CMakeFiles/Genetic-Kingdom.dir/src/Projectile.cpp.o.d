@@ -1,7 +1,7 @@
-CMakeFiles/Genetic-Kingdom.dir/src/Tower.cpp.o: \
- /home/thedegeo/gitclone/Genetic-Kingdom/src/Tower.cpp \
+CMakeFiles/Genetic-Kingdom.dir/src/Projectile.cpp.o: \
+ /home/thedegeo/gitclone/Genetic-Kingdom/src/Projectile.cpp \
  /usr/include/stdc-predef.h \
- /home/thedegeo/gitclone/Genetic-Kingdom/include/Tower.h \
+ /home/thedegeo/gitclone/Genetic-Kingdom/include/Projectile.h \
  /usr/include/SDL2/SDL.h /usr/include/SDL2/SDL_main.h \
  /usr/include/SDL2/SDL_stdinc.h /usr/include/SDL2/SDL_config.h \
  /usr/include/SDL2/SDL_platform.h /usr/include/SDL2/begin_code.h \
@@ -218,30 +218,4 @@ CMakeFiles/Genetic-Kingdom.dir/src/Tower.cpp.o: \
  /usr/include/SDL2/SDL_system.h /usr/include/SDL2/SDL_timer.h \
  /usr/include/SDL2/SDL_version.h /usr/include/SDL2/SDL_locale.h \
  /usr/include/SDL2/SDL_misc.h \
- /home/thedegeo/gitclone/Genetic-Kingdom/include/Enemy.h \
- /home/thedegeo/gitclone/Genetic-Kingdom/include/Projectile.h \
- /usr/include/c++/14.2.1/vector /usr/include/c++/14.2.1/bits/allocator.h \
- /usr/include/c++/14.2.1/x86_64-pc-linux-gnu/bits/c++allocator.h \
- /usr/include/c++/14.2.1/bits/new_allocator.h /usr/include/c++/14.2.1/new \
- /usr/include/c++/14.2.1/bits/exception.h \
- /usr/include/c++/14.2.1/bits/memoryfwd.h \
- /usr/include/c++/14.2.1/bits/stl_construct.h \
- /usr/include/c++/14.2.1/bits/stl_uninitialized.h \
- /usr/include/c++/14.2.1/ext/alloc_traits.h \
- /usr/include/c++/14.2.1/bits/alloc_traits.h \
- /usr/include/c++/14.2.1/bits/stl_vector.h \
- /usr/include/c++/14.2.1/initializer_list \
- /usr/include/c++/14.2.1/bits/stl_bvector.h \
- /usr/include/c++/14.2.1/bits/functional_hash.h \
- /usr/include/c++/14.2.1/bits/hash_bytes.h \
- /usr/include/c++/14.2.1/bits/refwrap.h \
- /usr/include/c++/14.2.1/bits/invoke.h \
- /usr/include/c++/14.2.1/bits/stl_function.h \
- /usr/include/c++/14.2.1/backward/binders.h \
- /usr/include/c++/14.2.1/bits/range_access.h \
- /usr/include/c++/14.2.1/bits/vector.tcc \
- /usr/include/c++/14.2.1/bits/memory_resource.h \
- /usr/include/c++/14.2.1/cstddef \
- /usr/include/c++/14.2.1/bits/uses_allocator.h \
- /usr/include/c++/14.2.1/bits/uses_allocator_args.h \
- /usr/include/c++/14.2.1/tuple
+ /home/thedegeo/gitclone/Genetic-Kingdom/include/Enemy.h

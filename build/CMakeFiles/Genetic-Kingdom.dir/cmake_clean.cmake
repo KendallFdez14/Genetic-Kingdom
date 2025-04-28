@@ -1,8 +1,11 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/Genetic-Kingdom.dir/link.d"
   "CMakeFiles/Genetic-Kingdom.dir/src/Enemy.cpp.o"
   "CMakeFiles/Genetic-Kingdom.dir/src/Enemy.cpp.o.d"
   "CMakeFiles/Genetic-Kingdom.dir/src/Game.cpp.o"
   "CMakeFiles/Genetic-Kingdom.dir/src/Game.cpp.o.d"
+  "CMakeFiles/Genetic-Kingdom.dir/src/Projectile.cpp.o"
+  "CMakeFiles/Genetic-Kingdom.dir/src/Projectile.cpp.o.d"
   "CMakeFiles/Genetic-Kingdom.dir/src/Tower.cpp.o"
   "CMakeFiles/Genetic-Kingdom.dir/src/Tower.cpp.o.d"
   "CMakeFiles/Genetic-Kingdom.dir/src/main.cpp.o"
