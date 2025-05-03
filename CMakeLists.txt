@@ -10,6 +10,7 @@ set(SOURCES
     src/Game.cpp
     src/Enemy.cpp
     src/Tower.cpp
+    src/Projectile.cpp
 )
 
 add_executable(Genetic-Kingdom ${SOURCES})

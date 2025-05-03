@@ -3,6 +3,7 @@
 #include <vector>
 #include "Enemy.h"
 #include "Tower.h"
+#include "Projectile.h"
 
 class Game {
 public:
@@ -19,6 +20,7 @@ private:
 
     std::vector<Enemy> enemies;
     std::vector<Tower> towers;
+    std::vector<Projectile> projectiles;
 
     void handleEvents();
     void update();

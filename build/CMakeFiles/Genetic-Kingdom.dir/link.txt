@@ -1,1 +1,0 @@
-/usr/bin/c++ "CMakeFiles/Genetic-Kingdom.dir/src/main.cpp.o" "CMakeFiles/Genetic-Kingdom.dir/src/Game.cpp.o" "CMakeFiles/Genetic-Kingdom.dir/src/Enemy.cpp.o" "CMakeFiles/Genetic-Kingdom.dir/src/Tower.cpp.o" -o Genetic-Kingdom  /usr/lib/x86_64-linux-gnu/libSDL2.so 

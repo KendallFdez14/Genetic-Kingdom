@@ -52,13 +52,19 @@ void Game::update() {
     }
 
     for (auto& tower : towers)
-    tower.update(enemies);
+        tower.update(enemies, projectiles);
     
     for (auto& enemy : enemies)
         enemy.update();
-        
+    
+    for (auto& projectile : projectiles)
+        projectile.update();
+
     enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
         [](Enemy& e) { return e.isDead(); }), enemies.end());
+
+    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+        [](Projectile& p) { return p.getHasHit(); }), projectiles.end());
 }
 
 void Game::render() {
@@ -70,6 +76,9 @@ void Game::render() {
 
     for (auto& enemy : enemies)
         enemy.render(renderer);
+
+    for (auto& projectile : projectiles)
+        projectile.render(renderer);
 
     SDL_RenderPresent(renderer);
 }
