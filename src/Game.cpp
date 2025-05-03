@@ -20,8 +20,14 @@ bool Game::init() {
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) return false;
 
-    // Torre inicial
-    towers.emplace_back(200, 300);
+    // Torre tipo arquero (verde)
+    towers.emplace_back(150, 200, TowerType::Archer);
+
+    // Torre tipo mago (azul)
+    towers.emplace_back(150, 300, TowerType::Mage);
+
+    // Torre tipo artillero (naranja)
+    towers.emplace_back(150, 400, TowerType::Artillery);
 
     running = true;
     return true;

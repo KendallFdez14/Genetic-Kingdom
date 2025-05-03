@@ -15,5 +15,5 @@ class Enemy {
     private:
         int x, y;
         int speed = 1;
-        int health = 3; // vida total
+        int health = 5; // vida total
     };
