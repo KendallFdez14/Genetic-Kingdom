@@ -18,11 +18,17 @@ public:
 
 private:
     int x, y;
-    int range = 150;
-    int fireRate = 60;
-    int fireCooldown = 0;
     TowerType type;
+
+    int damage;
+    int range;
+    int fireRate; // cuántos frames entre disparos
+    int fireCooldown = 0;
+
+    int specialCooldown;        // total
+    int currentSpecialCooldown; // en cuenta regresiva
 
     void shoot(Enemy& target, std::vector<Projectile>& projectiles);
     bool isInRange(const Enemy& enemy);
+    void configureStats(); // según el tipo
 };

@@ -4,17 +4,16 @@
 
 class Projectile {
     public:
-        Projectile(int x, int y, Enemy* target);
+        Projectile(int x, int y, Enemy* target, int damage);
         void update();
         void render(SDL_Renderer* renderer);
-        void hit();
-        bool getHasHit() const;
-        int getX() const;
-        int getY() const;
-
+        bool hasHit() const;
+    
     private:
-        int x, y;
+        float x, y;
+        float speed = 4.0f;
+        int damage;
         Enemy* target;
-        int speed = 2;
-        bool hasHit = false;
-};
+        bool hit = false;
+    };
+    

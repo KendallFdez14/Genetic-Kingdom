@@ -70,7 +70,7 @@ void Game::update() {
         [](Enemy& e) { return e.isDead(); }), enemies.end());
 
     projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
-        [](Projectile& p) { return p.getHasHit(); }), projectiles.end());
+        [](Projectile& p) { return p.hasHit(); }), projectiles.end());
 }
 
 void Game::render() {

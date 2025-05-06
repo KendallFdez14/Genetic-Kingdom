@@ -1,19 +1,19 @@
 #pragma once
-#include <SDL2/SDL.h>
+#include <SDL2/SDL.h> 
 
 class Enemy {
     public:
         Enemy(int x, int y);
+    
         void update();
         void render(SDL_Renderer* renderer);
-    
+        void takeDamage(int dmg);
         bool isDead() const;
         int getX() const;
         int getY() const;
-        void takeDamage(int dmg); // nuevo
     
     private:
         int x, y;
         int speed = 1;
-        int health = 5; // vida total
-    };
+        int health = 100; // aumentado
+};
