@@ -3,8 +3,8 @@
 #include <cmath>
 
 // Clase base
-Enemy::Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, int health, float speed, float arrowRes, float magicRes, float artilleryRes, SDL_Texture* texture)
-    : x(x), y(y), path(path), health(health), speed(speed), arrowResistance(arrowRes), magicResistance(magicRes), artilleryResistance(artilleryRes), texture(texture) {}
+Enemy::Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, int health, float speed, float arrowRes, float magicRes, float artilleryRes, SDL_Texture* texture, int gold)
+    : x(x), y(y), path(path), health(health), speed(speed), arrowResistance(arrowRes), magicResistance(magicRes), artilleryResistance(artilleryRes), texture(texture), gold(gold) {}
 
 void Enemy::update() {
     if (currentNode >= path.size()) return; // Si ya llegó al final del camino
@@ -49,19 +49,20 @@ bool Enemy::isDead() const {
 
 int Enemy::getX() const { return x; }
 int Enemy::getY() const { return y; }
+int Enemy::getGold() const { return gold; }
 
 // Ogro
 Ogre::Ogre(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture)
-    : Enemy(x, y, path, 150, 1.5f, 0.5f, 0.2f, 0.2f, texture) {}
+    : Enemy(x, y, path, 150, 1.5f, 0.5f, 0.2f, 0.2f, texture, 15) {}
 
 // Elfo Oscuro
 DarkElf::DarkElf(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture)
-    : Enemy(x, y, path, 100, 3.5f, 0.2f, 0.5f, 0.2f, texture) {}
+    : Enemy(x, y, path, 100, 3.5f, 0.2f, 0.5f, 0.2f, texture, 10) {}
 
 // Harpía
 Harpy::Harpy(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture)
-    : Enemy(x, y, path, 120, 2.5f, 0.3f, 0.3f, 1.0f, texture) {}
+    : Enemy(x, y, path, 120, 2.5f, 0.3f, 0.3f, 1.0f, texture, 12) {}
 
 // Mercenario
 Mercenary::Mercenary(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture)
-    : Enemy(x, y, path, 110, 2.0f, 0.4f, 0.1f, 0.4f, texture) {}
+    : Enemy(x, y, path, 110, 2.0f, 0.4f, 0.1f, 0.4f, texture, 11) {}

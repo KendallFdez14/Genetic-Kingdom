@@ -16,6 +16,7 @@ public:
     Tower(int x, int y, TowerType type);
     void update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std::unique_ptr<Projectile>>& projectiles);
     void render(SDL_Renderer* renderer);
+    static int getCost(TowerType type);
 
 private:
     int x, y;
@@ -25,6 +26,7 @@ private:
     int range;
     int fireRate; // cuántos frames entre disparos
     int fireCooldown = 0;
+    int cost;
 
     int specialCooldown;        // total
     int currentSpecialCooldown; // en cuenta regresiva

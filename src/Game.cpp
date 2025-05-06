@@ -2,13 +2,18 @@
 #include <iostream>
 #include <algorithm>
 #include <SDL2/SDL_image.h> // Include SDL_image for IMG_LoadTexture
+#include <SDL2/SDL_ttf.h> // Include SDL_ttf for TTF_RenderText_Blended
+#include <sstream>
+#include <numeric>
+#include "Tower.h"
 
 SDL_Texture* ogreTexture = nullptr;
 SDL_Texture* darkElfTexture = nullptr;
 SDL_Texture* harpyTexture = nullptr;
 SDL_Texture* mercenaryTexture = nullptr;
+TTF_Font* font = nullptr;
 
-Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0) {
+Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0), gold(50), selectedTowerType(TowerType::Archer) {
     // Inicializar el mapa 8x8 con un camino
     map = {
         {1, 1, 1, 1, 0, 0, 0, 0},
@@ -51,13 +56,25 @@ bool Game::init() {
     }
 
     // Cargar texturas
-    ogreTexture = IMG_LoadTexture(renderer, "/home/kendall/Progra/Genetic-Kingdom/assets/ogre.png");
-    darkElfTexture = IMG_LoadTexture(renderer, "/home/kendall/Progra/Genetic-Kingdom/assets/dark_elf.png");
-    harpyTexture = IMG_LoadTexture(renderer, "/home/kendall/Progra/Genetic-Kingdom/assets/harpy.png");
-    mercenaryTexture = IMG_LoadTexture(renderer, "/home/kendall/Progra/Genetic-Kingdom/assets/mercenary.png");
+    ogreTexture = IMG_LoadTexture(renderer, "../assets/ogre.png");
+    darkElfTexture = IMG_LoadTexture(renderer, "../assets/dark_elf.png");
+    harpyTexture = IMG_LoadTexture(renderer, "../assets/harpy.png");
+    mercenaryTexture = IMG_LoadTexture(renderer, "../assets/mercenary.png");
 
     if (!ogreTexture || !darkElfTexture || !harpyTexture || !mercenaryTexture) {
         std::cerr << "Error al cargar texturas: " << SDL_GetError() << "\n";
+        return false;
+    }
+
+    //Initialize SDL_ttf
+    if (TTF_Init() == -1) {
+        std::cerr << "SDL_ttf error: " << TTF_GetError() << "\n";
+        return false;
+    }
+
+    font = TTF_OpenFont("../assets/BigBlueT.ttf", 24);
+    if (!font) {
+        std::cerr << "SDL_ttf error: " << TTF_GetError() << "\n";
         return false;
     }
 
@@ -103,10 +120,16 @@ void Game::placeTower(int mouseX, int mouseY) {
     int col = mouseX / 75;
     int row = mouseY / 75;
 
+    if (gold < Tower::getCost(selectedTowerType)) {
+        // No se puede comprar la torre
+        return;
+    }
+
     if (row >= 0 && row < 8 && col >= 0 && col < 8 && map[row][col] == 0) {
         // Coloca una torre del tipo seleccionado en la celda
         towers.emplace_back(col * 75 + 37, row * 75 + 37, selectedTowerType);
         map[row][col] = 2; // Marca la celda como ocupada
+        gold -= Tower::getCost(selectedTowerType);
     }
 }
 
@@ -126,7 +149,10 @@ void Game::update() {
     for (auto& projectile : projectiles)
         projectile->update(); // Llamar a update() en el puntero
 
-        enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+    gold += std::accumulate(enemies.begin(), enemies.end(), 0,
+        [](int sum, const std::unique_ptr<Enemy>& e) { return sum + (e->isDead() ? e->getGold() : 0); });
+
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
         [](const std::unique_ptr<Enemy>& e) { return e->isDead(); }), enemies.end());
 
     projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
@@ -138,7 +164,7 @@ void Game::render() {
     SDL_RenderClear(renderer);
 
     renderMap(); // Renderizar el mapa
-
+    renderPannel();
     for (auto& tower : towers)
         tower.render(renderer);
 
@@ -186,6 +212,29 @@ void Game::spawnEnemy() {
     }
 
     enemyType = (enemyType + 1) % 4; // Alternar entre los tipos de enemigos
+}
+
+void Game::renderPannel() {
+    //Background
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_Rect pannel = {600, 0, 200, 600};
+    SDL_RenderFillRect(renderer, &pannel);
+
+    //Border
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_Rect pannelRect = {610, 10, 180, 580};
+    SDL_RenderDrawRect(renderer, &pannelRect);
+
+    //Gold Text
+    SDL_Color color = {0, 0, 0};
+    std::stringstream ss;
+    ss << "Gold: " << gold;
+    SDL_Surface* textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    SDL_Rect textRect = {610, 10, textSurface->w, textSurface->h};
+    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
 }
 
 void Game::clean() {

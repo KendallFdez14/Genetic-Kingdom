@@ -27,7 +27,7 @@ private:
     std::vector<std::unique_ptr<Enemy>> enemies; // Cambiado a punteros inteligentes
     std::vector<std::unique_ptr<Projectile>> projectiles;
 
-    TowerType selectedTowerType = TowerType::Archer; // Tipo de torre seleccionado
+    TowerType selectedTowerType; // Tipo de torre seleccionado
 
     void handleEvents();
     void update();
@@ -35,5 +35,8 @@ private:
     void spawnEnemy();
 
     void renderMap();
+    void renderPannel();
     void placeTower(int mouseX, int mouseY);
+
+    int gold;
 };

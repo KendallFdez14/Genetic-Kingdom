@@ -18,9 +18,10 @@ add_executable(Genetic-Kingdom ${SOURCES})
 # Agregar SDL2 y SDL2_image
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
+find_package(SDL2_ttf REQUIRED)
 
-# Incluir directorios de SDL2 y SDL2_image
-include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS})
+# Incluir directorios de SDL2, SDL2_image y SDL2_ttf
+include_directories(${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS} ${SDL2_TTF_INCLUDE_DIRS})
 
 # Enlazar SDL2 y SDL2_image manualmente
-target_link_libraries(Genetic-Kingdom ${SDL2_LIBRARIES} -lSDL2_image)
+target_link_libraries(Genetic-Kingdom ${SDL2_LIBRARIES} -lSDL2_image -lSDL2_ttf)

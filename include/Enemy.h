@@ -5,7 +5,7 @@
 
 class Enemy {
     public:
-        Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, int health, float speed, float arrowRes, float magicRes, float artilleryRes, SDL_Texture* texture);
+        Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, int health, float speed, float arrowRes, float magicRes, float artilleryRes, SDL_Texture* texture, int gold);
         virtual ~Enemy() = default;
 
         void update();
@@ -14,7 +14,7 @@ class Enemy {
         bool isDead() const;
         int getX() const;
         int getY() const;
-
+        int getGold() const;
     protected:
         int x, y;
         float speed;
@@ -28,6 +28,8 @@ class Enemy {
         size_t currentNode = 0;
 
         SDL_Texture* texture; // Textura del enemigo
+
+        int gold;
 };
 
 // Ogro

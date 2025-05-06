@@ -14,16 +14,19 @@ void Tower::configureStats() {
             damage = 10;
             range = 150; // Rango en píxeles
             fireRate = 25; // Dispara cada 30 frames (~0.5 segundos a 60 FPS)
+            cost = 10;
             break;
         case TowerType::Mage:
             damage = 20;
             range = 120;
             fireRate = 55; // Dispara cada 60 frames (~1 segundo a 60 FPS)
+            cost = 20;
             break;
         case TowerType::Artillery:
             damage = 50;
             range = 200;
             fireRate = 85; // Dispara cada 90 frames (~1.5 segundos a 60 FPS)
+            cost = 30;
             break;
     }
 }
@@ -78,4 +81,12 @@ void Tower::render(SDL_Renderer* renderer) {
     }
     SDL_Rect rect = { x - 10, y - 10, 20, 20 };
     SDL_RenderFillRect(renderer, &rect);
+}
+
+int Tower::getCost(TowerType type) {
+    switch (type) {
+        case TowerType::Archer: return 10;
+        case TowerType::Mage: return 20;
+        case TowerType::Artillery: return 30;
+    }
 }
