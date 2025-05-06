@@ -1,8 +1,8 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <vector>
-#include "Enemy.h"
 #include "Tower.h"
+#include "Enemy.h"
 #include "Projectile.h"
 
 class Game {
@@ -18,13 +18,19 @@ private:
     SDL_Renderer* renderer;
     bool running;
 
-    std::vector<Enemy> enemies;
+    std::vector<std::vector<int>> map; // Representación del mapa
+    std::vector<std::pair<int, int>> path; // Lista de nodos del camino
+    int enemyTimer;
+
     std::vector<Tower> towers;
+    std::vector<Enemy> enemies;
     std::vector<Projectile> projectiles;
 
     void handleEvents();
     void update();
     void render();
     void spawnEnemy();
-    int enemyTimer;
+
+    void renderMap(); // Nueva función para renderizar el mapa
+    void placeTower(int mouseX, int mouseY);
 };

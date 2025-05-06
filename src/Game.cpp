@@ -2,7 +2,25 @@
 #include <iostream>
 #include <algorithm>
 
-Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0) {}
+Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0) {
+    // Inicializar el mapa 8x8 con un camino
+    map = {
+        {1, 1, 1, 1, 0, 0, 0, 0},
+        {0, 0, 0, 1, 0, 0, 0, 0},
+        {0, 0, 0, 1, 0, 0, 0, 0},
+        {0, 0, 0, 1, 0, 0, 0, 0},
+        {0, 0, 0, 1, 1, 1, 1, 1},
+        {0, 0, 0, 0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 0, 0, 0, 1}
+    };
+
+    // Definir el camino como una lista de nodos
+    path  = {
+        {0, 0}, {1, 0}, {2, 0}, {3, 0}, {3, 1}, {3, 2}, {3, 3}, {3, 4},
+        {4, 4}, {5, 4}, {6, 4}, {7, 4}, {7, 5}, {7, 6}, {7, 7}
+    };
+}
 
 Game::~Game() {
     clean();
@@ -15,19 +33,16 @@ bool Game::init() {
     }
 
     window = SDL_CreateWindow("Tower Defense", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
-    if (!window) return false;
+    if (!window) {
+        std::cerr << "SDL_CreateWindow error: " << SDL_GetError() << "\n";
+        return false;
+    }
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) return false;
-
-    // Torre tipo arquero (verde)
-    towers.emplace_back(150, 200, TowerType::Archer);
-
-    // Torre tipo mago (azul)
-    towers.emplace_back(150, 300, TowerType::Mage);
-
-    // Torre tipo artillero (naranja)
-    towers.emplace_back(150, 400, TowerType::Artillery);
+    if (!renderer) {
+        std::cerr << "SDL_CreateRenderer error: " << SDL_GetError() << "\n";
+        return false;
+    }
 
     running = true;
     return true;
@@ -45,8 +60,24 @@ void Game::run() {
 void Game::handleEvents() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        if (event.type == SDL_QUIT)
+        if (event.type == SDL_QUIT) {
             running = false;
+        } else if (event.type == SDL_MOUSEBUTTONDOWN) {
+            if (event.button.button == SDL_BUTTON_LEFT) {
+                placeTower(event.button.x, event.button.y);
+            }
+        }
+    }
+}
+
+void Game::placeTower(int mouseX, int mouseY) {
+    int col = mouseX / 75;
+    int row = mouseY / 75;
+
+    if (row >= 0 && row < 8 && col >= 0 && col < 8 && map[row][col] == 0) {
+        // Coloca una torre en la celda seleccionada
+        towers.emplace_back(col * 75 + 37, row * 75 + 37, TowerType::Archer);
+        map[row][col] = 2; // Marca la celda como ocupada
     }
 }
 
@@ -77,6 +108,8 @@ void Game::render() {
     SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
     SDL_RenderClear(renderer);
 
+    renderMap(); // Renderizar el mapa
+
     for (auto& tower : towers)
         tower.render(renderer);
 
@@ -89,8 +122,23 @@ void Game::render() {
     SDL_RenderPresent(renderer);
 }
 
+void Game::renderMap() {
+    int cellSize = 75; // Tamaño de cada celda (800px / 8 = 100px por celda)
+    for (int row = 0; row < 8; ++row) {
+        for (int col = 0; col < 8; ++col) {
+            if (map[row][col] == 1) {
+                SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Color del camino
+            } else {
+                SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Color del espacio vacío
+            }
+            SDL_Rect cell = {col * cellSize, row * cellSize, cellSize, cellSize};
+            SDL_RenderFillRect(renderer, &cell);
+        }
+    }
+}
+
 void Game::spawnEnemy() {
-    enemies.emplace_back(0, 320);
+    enemies.emplace_back(0, 0, path); // Pasa el camino al enemigo
 }
 
 void Game::clean() {

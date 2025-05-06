@@ -1,10 +1,30 @@
 #include "Enemy.h"
 #include <SDL2/SDL.h>
+#include <cmath>
 
-Enemy::Enemy(int x, int y) : x(x), y(y) {}
+Enemy::Enemy(int x, int y, const std::vector<std::pair<int, int>>& path)
+    : x(x), y(y), path(path) {}
 
 void Enemy::update() {
-    x += speed;
+    if (currentNode >= path.size()) return; // Si ya llegó al final del camino
+
+    int targetX = path[currentNode].first * 75 + 37; // Centro de la celda
+    int targetY = path[currentNode].second * 75 + 37;
+
+    float dx = targetX - x;
+    float dy = targetY - y;
+    float dist = std::sqrt(dx * dx + dy * dy);
+
+    if (dist <= speed) {
+        // Si llegó al nodo actual, pasa al siguiente
+        x = targetX;
+        y = targetY;
+        currentNode++;
+    } else {
+        // Movimiento hacia el nodo actual
+        x += (dx / dist) * speed;
+        y += (dy / dist) * speed;
+    }
 }
 
 void Enemy::render(SDL_Renderer* renderer) {
