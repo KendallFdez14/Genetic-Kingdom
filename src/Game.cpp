@@ -1,6 +1,12 @@
 #include "Game.h"
 #include <iostream>
 #include <algorithm>
+#include <SDL2/SDL_image.h> // Include SDL_image for IMG_LoadTexture
+
+SDL_Texture* ogreTexture = nullptr;
+SDL_Texture* darkElfTexture = nullptr;
+SDL_Texture* harpyTexture = nullptr;
+SDL_Texture* mercenaryTexture = nullptr;
 
 Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0) {
     // Inicializar el mapa 8x8 con un camino
@@ -41,6 +47,17 @@ bool Game::init() {
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (!renderer) {
         std::cerr << "SDL_CreateRenderer error: " << SDL_GetError() << "\n";
+        return false;
+    }
+
+    // Cargar texturas
+    ogreTexture = IMG_LoadTexture(renderer, "/home/kendall/Progra/Genetic-Kingdom/assets/ogre.png");
+    darkElfTexture = IMG_LoadTexture(renderer, "/home/kendall/Progra/Genetic-Kingdom/assets/dark_elf.png");
+    harpyTexture = IMG_LoadTexture(renderer, "/home/kendall/Progra/Genetic-Kingdom/assets/harpy.png");
+    mercenaryTexture = IMG_LoadTexture(renderer, "/home/kendall/Progra/Genetic-Kingdom/assets/mercenary.png");
+
+    if (!ogreTexture || !darkElfTexture || !harpyTexture || !mercenaryTexture) {
+        std::cerr << "Error al cargar texturas: " << SDL_GetError() << "\n";
         return false;
     }
 
@@ -102,18 +119,18 @@ void Game::update() {
 
     for (auto& tower : towers)
         tower.update(enemies, projectiles);
-    
-    for (auto& enemy : enemies)
-        enemy.update();
-    
-    for (auto& projectile : projectiles)
-        projectile.update();
 
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-        [](Enemy& e) { return e.isDead(); }), enemies.end());
+        for (auto& enemy : enemies)
+        enemy->update(); // Llamar a update() en el puntero
+
+    for (auto& projectile : projectiles)
+        projectile->update(); // Llamar a update() en el puntero
+
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+        [](const std::unique_ptr<Enemy>& e) { return e->isDead(); }), enemies.end());
 
     projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
-        [](Projectile& p) { return p.hasHit(); }), projectiles.end());
+        [](const std::unique_ptr<Projectile>& p) { return p->hasHit(); }), projectiles.end());
 }
 
 void Game::render() {
@@ -125,11 +142,11 @@ void Game::render() {
     for (auto& tower : towers)
         tower.render(renderer);
 
-    for (auto& enemy : enemies)
-        enemy.render(renderer);
+        for (auto& enemy : enemies)
+        enemy->render(renderer); // Llamar a render() en el puntero
 
     for (auto& projectile : projectiles)
-        projectile.render(renderer);
+        projectile->render(renderer); // Llamar a render() en el puntero
 
     SDL_RenderPresent(renderer);
 }
@@ -150,11 +167,37 @@ void Game::renderMap() {
 }
 
 void Game::spawnEnemy() {
-    enemies.emplace_back(0, 0, path); // Pasa el camino al enemigo
+    // Alternar entre diferentes tipos de enemigos
+    static int enemyType = 0;
+
+    switch (enemyType) {
+        case 0:
+            enemies.emplace_back(std::make_unique<Ogre>(0, 0, path, ogreTexture));
+            break;
+        case 1:
+            enemies.emplace_back(std::make_unique<DarkElf>(0, 0, path, darkElfTexture));
+            break;
+        case 2:
+            enemies.emplace_back(std::make_unique<Harpy>(0, 0, path, harpyTexture));
+            break;
+        case 3:
+            enemies.emplace_back(std::make_unique<Mercenary>(0, 0, path, mercenaryTexture));
+            break;
+    }
+
+    enemyType = (enemyType + 1) % 4; // Alternar entre los tipos de enemigos
 }
 
 void Game::clean() {
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    // Liberar texturas
+    if (ogreTexture) SDL_DestroyTexture(ogreTexture);
+    if (darkElfTexture) SDL_DestroyTexture(darkElfTexture);
+    if (harpyTexture) SDL_DestroyTexture(harpyTexture);
+    if (mercenaryTexture) SDL_DestroyTexture(mercenaryTexture);
+
+    // Liberar el renderer y la ventana
+    if (renderer) SDL_DestroyRenderer(renderer);
+    if (window) SDL_DestroyWindow(window);
+
     SDL_Quit();
 }

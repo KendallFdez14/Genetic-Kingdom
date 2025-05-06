@@ -3,6 +3,7 @@
 #include "Enemy.h"
 #include "Projectile.h"
 #include <vector>
+#include <memory>
 
 enum class TowerType {
     Archer,
@@ -13,7 +14,7 @@ enum class TowerType {
 class Tower {
 public:
     Tower(int x, int y, TowerType type);
-    void update(std::vector<Enemy>& enemies, std::vector<Projectile>& projectiles);
+    void update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std::unique_ptr<Projectile>>& projectiles);
     void render(SDL_Renderer* renderer);
 
 private:
@@ -28,7 +29,7 @@ private:
     int specialCooldown;        // total
     int currentSpecialCooldown; // en cuenta regresiva
 
-    void shoot(Enemy& target, std::vector<Projectile>& projectiles);
+    void shoot(Enemy& target, std::vector<std::unique_ptr<Projectile>>& projectiles);
     bool isInRange(const Enemy& enemy);
     void configureStats(); // según el tipo
 };

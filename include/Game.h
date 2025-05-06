@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <vector>
+#include <memory>
 #include "Tower.h"
 #include "Enemy.h"
 #include "Projectile.h"
@@ -23,8 +24,8 @@ private:
     int enemyTimer;
 
     std::vector<Tower> towers;
-    std::vector<Enemy> enemies;
-    std::vector<Projectile> projectiles;
+    std::vector<std::unique_ptr<Enemy>> enemies; // Cambiado a punteros inteligentes
+    std::vector<std::unique_ptr<Projectile>> projectiles;
 
     TowerType selectedTowerType = TowerType::Archer; // Tipo de torre seleccionado
 
@@ -33,6 +34,6 @@ private:
     void render();
     void spawnEnemy();
 
-    void renderMap(); // Nueva función para renderizar el mapa
+    void renderMap();
     void placeTower(int mouseX, int mouseY);
 };

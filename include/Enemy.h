@@ -1,23 +1,55 @@
 #pragma once
 #include <SDL2/SDL.h>
 #include <vector>
+#include <string>
 
 class Enemy {
     public:
-        Enemy(int x, int y, const std::vector<std::pair<int, int>>& path);
+        Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, int health, float speed, float arrowRes, float magicRes, float artilleryRes, SDL_Texture* texture);
+        virtual ~Enemy() = default;
 
         void update();
         void render(SDL_Renderer* renderer);
-        void takeDamage(int dmg);
+        void takeDamage(int dmg, const std::string& type);
         bool isDead() const;
         int getX() const;
         int getY() const;
 
-    private:
+    protected:
         int x, y;
-        float speed = 2.0f; // Aumenta la velocidad para que el movimiento sea más visible
-        int health = 100;
+        float speed;
+        int health;
 
-        std::vector<std::pair<int, int>> path; // Lista de nodos del camino
-        size_t currentNode = 0; // Nodo actual que el enemigo está siguiendo
+        float arrowResistance;
+        float magicResistance;
+        float artilleryResistance;
+
+        std::vector<std::pair<int, int>> path;
+        size_t currentNode = 0;
+
+        SDL_Texture* texture; // Textura del enemigo
+};
+
+// Ogro
+class Ogre : public Enemy {
+    public:
+        Ogre(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+};
+
+// Elfo Oscuro
+class DarkElf : public Enemy {
+    public:
+        DarkElf(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+};
+
+// Harpía
+class Harpy : public Enemy {
+    public:
+        Harpy(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+};
+
+// Mercenario
+class Mercenary : public Enemy {
+    public:
+        Mercenary(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
 };

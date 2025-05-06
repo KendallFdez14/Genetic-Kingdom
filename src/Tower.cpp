@@ -1,57 +1,71 @@
 #include "Tower.h"
+#include "Projectile.h"
 #include <cmath>
 
 Tower::Tower(int x, int y, TowerType type)
     : x(x), y(y), type(type) {
-    configureStats();
+    configureStats(); // Configurar atributos según el tipo de torre
     currentSpecialCooldown = specialCooldown;
 }
 
 void Tower::configureStats() {
     switch (type) {
         case TowerType::Archer:
-            damage = 5;
-            range = 180;
-            fireRate = 30;
-            specialCooldown = 600;
+            damage = 10;
+            range = 150; // Rango en píxeles
+            fireRate = 25; // Dispara cada 30 frames (~0.5 segundos a 60 FPS)
             break;
         case TowerType::Mage:
-            damage = 10;
-            range = 140;
-            fireRate = 60;
-            specialCooldown = 900;
+            damage = 20;
+            range = 120;
+            fireRate = 55; // Dispara cada 60 frames (~1 segundo a 60 FPS)
             break;
         case TowerType::Artillery:
-            damage = 20;
+            damage = 50;
             range = 200;
-            fireRate = 120;
-            specialCooldown = 1200;
+            fireRate = 85; // Dispara cada 90 frames (~1.5 segundos a 60 FPS)
             break;
     }
 }
 
 bool Tower::isInRange(const Enemy& enemy) {
-    int dx = x - enemy.getX();
-    int dy = y - enemy.getY();
-    return (dx * dx + dy * dy) <= (range * range);
+    float dx = enemy.getX() - x;
+    float dy = enemy.getY() - y;
+    float distance = std::sqrt(dx * dx + dy * dy);
+    return distance <= range;
 }
 
-void Tower::shoot(Enemy& target, std::vector<Projectile>& projectiles) {
-    Projectile p(x, y, &target, damage);
-    projectiles.push_back(p);
+void Tower::shoot(Enemy& target, std::vector<std::unique_ptr<Projectile>>& projectiles) {
+    switch (type) {
+        case TowerType::Archer:
+            projectiles.emplace_back(std::make_unique<Arrow>(x, y, &target, damage));
+            break;
+        case TowerType::Mage:
+            projectiles.emplace_back(std::make_unique<Magic>(x, y, &target, damage));
+            break;
+        case TowerType::Artillery:
+            projectiles.emplace_back(std::make_unique<Bullet>(x, y, &target, damage));
+            break;
+    }
 }
 
-void Tower::update(std::vector<Enemy>& enemies, std::vector<Projectile>& projectiles) {
-    if (fireCooldown > 0) fireCooldown--;
-    if (currentSpecialCooldown > 0) currentSpecialCooldown--;
+void Tower::update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std::unique_ptr<Projectile>>& projectiles) {
+    // Reducir el cooldown del disparo
+    if (fireCooldown > 0) {
+        fireCooldown--;
+    }
 
-    if (fireCooldown == 0) {
-        for (Enemy& e : enemies) {
-            if (isInRange(e)) {
-                shoot(e, projectiles);
-                fireCooldown = fireRate;
-                break;
-            }
+    // Si el cooldown no ha terminado, no puede disparar
+    if (fireCooldown > 0) {
+        return;
+    }
+
+    // Buscar un enemigo en rango
+    for (auto& enemy : enemies) {
+        if (isInRange(*enemy)) { // Desreferenciar el puntero único
+            shoot(*enemy, projectiles); // Pasar el enemigo como referencia
+            fireCooldown = fireRate; // Reiniciar el cooldown
+            break; // Solo dispara a un enemigo por actualización
         }
     }
 }
