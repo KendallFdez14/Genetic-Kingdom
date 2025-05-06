@@ -66,6 +66,18 @@ void Game::handleEvents() {
             if (event.button.button == SDL_BUTTON_LEFT) {
                 placeTower(event.button.x, event.button.y);
             }
+        } else if (event.type == SDL_KEYDOWN) {
+            switch (event.key.keysym.sym) {
+                case SDLK_1:
+                    selectedTowerType = TowerType::Archer;
+                    break;
+                case SDLK_2:
+                    selectedTowerType = TowerType::Mage;
+                    break;
+                case SDLK_3:
+                    selectedTowerType = TowerType::Artillery;
+                    break;
+            }
         }
     }
 }
@@ -75,8 +87,8 @@ void Game::placeTower(int mouseX, int mouseY) {
     int row = mouseY / 75;
 
     if (row >= 0 && row < 8 && col >= 0 && col < 8 && map[row][col] == 0) {
-        // Coloca una torre en la celda seleccionada
-        towers.emplace_back(col * 75 + 37, row * 75 + 37, TowerType::Archer);
+        // Coloca una torre del tipo seleccionado en la celda
+        towers.emplace_back(col * 75 + 37, row * 75 + 37, selectedTowerType);
         map[row][col] = 2; // Marca la celda como ocupada
     }
 }

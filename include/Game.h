@@ -26,6 +26,8 @@ private:
     std::vector<Enemy> enemies;
     std::vector<Projectile> projectiles;
 
+    TowerType selectedTowerType = TowerType::Archer; // Tipo de torre seleccionado
+
     void handleEvents();
     void update();
     void render();
