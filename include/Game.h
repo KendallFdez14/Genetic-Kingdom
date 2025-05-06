@@ -39,4 +39,5 @@ private:
     void placeTower(int mouseX, int mouseY);
 
     int gold;
+    int mapSize;
 };

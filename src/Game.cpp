@@ -14,22 +14,40 @@ SDL_Texture* mercenaryTexture = nullptr;
 TTF_Font* font = nullptr;
 
 Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0), gold(50), selectedTowerType(TowerType::Archer) {
-    // Inicializar el mapa 8x8 con un camino
+    // Inicializar el mapa 16x16 con un camino
     map = {
-        {1, 1, 1, 1, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0, 0},
-        {0, 0, 0, 1, 1, 1, 1, 1},
-        {0, 0, 0, 0, 0, 0, 0, 1},
-        {0, 0, 0, 0, 0, 0, 0, 1},
-        {0, 0, 0, 0, 0, 0, 0, 1}
+        {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0}
     };
+    mapSize = map.size();
 
     // Definir el camino como una lista de nodos
-    path  = {
-        {0, 0}, {1, 0}, {2, 0}, {3, 0}, {3, 1}, {3, 2}, {3, 3}, {3, 4},
-        {4, 4}, {5, 4}, {6, 4}, {7, 4}, {7, 5}, {7, 6}, {7, 7}
+    path = {
+        {0,0}, {1, 0}, {1, 1}, 
+        {1, 2}, {2, 2}, {3, 2}, {4, 2}, {5, 2}, {6, 2}, {7, 2}, {8, 2}, {9, 2}, {10, 2}, {11, 2}, {12, 2}, {13, 2}, {14, 2}, 
+        {14, 3}, {14, 4}, 
+        {14, 5}, {13, 5}, {12, 5}, {11, 5}, {10, 5}, {9, 5}, {8, 5}, {7, 5}, {6, 5}, {5, 5}, {4, 5}, {3, 5}, {2, 5}, {1, 5}, 
+        {1, 6}, {1, 7}, 
+        {1, 8}, {2, 8}, {3, 8}, {4, 8}, {5, 8}, {6, 8}, {7, 8}, {8, 8}, {9, 8}, {10, 8}, {11, 8}, {12, 8}, {13, 8}, {14, 8}, 
+        {14, 9}, {14, 10}, 
+        {14, 11}, {13, 11}, {12, 11}, {11, 11}, {10, 11}, {9, 11}, {8, 11}, {7, 11}, {6, 11}, {5, 11}, {4, 11}, {3, 11}, {2, 11}, {1, 11}, 
+        {1, 12}, {1, 13}, 
+        {1, 14}, {2, 14}, {3, 14}, {4, 14}, {5, 14}, {6, 14}, {7, 14}, {8, 14}, {9, 14}, {10, 14}, {11, 14}, {12, 14}, {13, 14}, {14, 14}, 
+        {14, 15}
     };
 }
 
@@ -43,7 +61,7 @@ bool Game::init() {
         return false;
     }
 
-    window = SDL_CreateWindow("Tower Defense", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+    window = SDL_CreateWindow("Tower Defense", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mapSize * 75 + 200, mapSize * 75, 0);
     if (!window) {
         std::cerr << "SDL_CreateWindow error: " << SDL_GetError() << "\n";
         return false;
@@ -125,7 +143,7 @@ void Game::placeTower(int mouseX, int mouseY) {
         return;
     }
 
-    if (row >= 0 && row < 8 && col >= 0 && col < 8 && map[row][col] == 0) {
+    if (row >= 0 && row < mapSize && col >= 0 && col < mapSize && map[row][col] == 0) {
         // Coloca una torre del tipo seleccionado en la celda
         towers.emplace_back(col * 75 + 37, row * 75 + 37, selectedTowerType);
         map[row][col] = 2; // Marca la celda como ocupada
@@ -179,8 +197,8 @@ void Game::render() {
 
 void Game::renderMap() {
     int cellSize = 75; // Tamaño de cada celda (800px / 8 = 100px por celda)
-    for (int row = 0; row < 8; ++row) {
-        for (int col = 0; col < 8; ++col) {
+    for (int row = 0; row < mapSize; ++row) {
+        for (int col = 0; col < mapSize; ++col) {
             if (map[row][col] == 1) {
                 SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Color del camino
             } else {
@@ -217,12 +235,12 @@ void Game::spawnEnemy() {
 void Game::renderPannel() {
     //Background
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_Rect pannel = {600, 0, 200, 600};
+    SDL_Rect pannel = {mapSize * 75, 0, 200, mapSize * 75};
     SDL_RenderFillRect(renderer, &pannel);
 
-    //Border
+    //padding (10)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_Rect pannelRect = {610, 10, 180, 580};
+    SDL_Rect pannelRect = {mapSize * 75 + 10, 10, 180, mapSize * 75};
     SDL_RenderDrawRect(renderer, &pannelRect);
 
     //Gold Text
@@ -231,7 +249,7 @@ void Game::renderPannel() {
     ss << "Gold: " << gold;
     SDL_Surface* textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    SDL_Rect textRect = {610, 10, textSurface->w, textSurface->h};
+    SDL_Rect textRect = {mapSize * 75 + 10, 10, textSurface->w, textSurface->h};
     SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
