@@ -5,6 +5,7 @@
 #include "Tower.h"
 #include "Enemy.h"
 #include "Projectile.h"
+#include "Astar.h"
 
 class Game {
 public:
