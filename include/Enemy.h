@@ -1,57 +1,106 @@
 #pragma once
-#include <SDL2/SDL.h>
+
 #include <vector>
+#include <memory>
 #include <string>
+#include <SDL2/SDL.h>
 
 class Enemy {
-    public:
-        Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, int health, float speed, float arrowRes, float magicRes, float artilleryRes, SDL_Texture* texture, int gold);
-        virtual ~Enemy() = default;
+protected:
+    int x, y;
+    int health;
+    float speed;
+    float arrowResistance;
+    float magicResistance;
+    float artilleryResistance;
+    int gold;
+    int currentNode = 0;
+    std::vector<std::pair<int, int>> path;
+    SDL_Texture* texture;
+    SDL_Rect destRect;
+    
+    // Fitness calculation fields
+    int hitsTaken = 0;
+    float timeTaken = 0;
+    float distanceTraveled = 0;
+    float pathLength = 0;
 
-        void update();
-        void render(SDL_Renderer* renderer);
-        void takeDamage(int dmg, const std::string& type);
-        bool isDead() const;
-        int getX() const;
-        int getY() const;
-        int getGold() const;
-    protected:
-        int x, y;
-        float speed;
-        int health;
-
-        float arrowResistance;
-        float magicResistance;
-        float artilleryResistance;
-
-        std::vector<std::pair<int, int>> path;
-        size_t currentNode = 0;
-
-        SDL_Texture* texture; // Textura del enemigo
-
-        int gold;
+public:
+    Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, 
+          int health, float speed, float arrowRes, float magicRes, 
+          float artilleryRes, SDL_Texture* texture, int gold);
+    
+    virtual ~Enemy() = default;
+    
+    virtual void update();
+    virtual void render(SDL_Renderer* renderer);
+    
+    // Getters
+    int getX() const;
+    int getY() const;
+    int getHealth() const { return health; }
+    float getSpeed() const { return speed; }
+    int getDamage() const { return 1; }
+    int getGold() const;
+    std::vector<std::pair<int, int>> getPath() const;
+    SDL_Texture* getTexture() const;
+    
+    // Resistance getters
+    float getArrowResistance() const { return arrowResistance; }
+    float getMagicResistance() const { return magicResistance; }
+    float getArtilleryResistance() const { return artilleryResistance; }
+    
+    // Combat methods
+    void takeDamage(int dmg, const std::string& type);
+    
+    // Status methods
+    bool isDead() const;
+    bool hasReachedEnd() const { return currentNode >= path.size() - 1; }
+    
+    // Genetic algorithm methods
+    virtual Enemy* clone() const = 0;
+    virtual void mutate(float mutationRate);
+    float calculateFitness() const;
+    
+    // Setters for genetic algorithm
+    void setHealth(int h) { health = h; }
+    void setSpeed(float s) { speed = s; }
+    void setArrowResistance(float r) { arrowResistance = r; }
+    void setMagicResistance(float r) { magicResistance = r; }
+    void setArtilleryResistance(float r) { artilleryResistance = r; }
+    void setGold(int g) { gold = g; }
+    
+    // Static method for crossover
+    static Enemy* crossover(const Enemy* parent1, const Enemy* parent2,
+                           const std::vector<std::pair<int, int>>& path,
+                           SDL_Texture* texture);
 };
 
-// Ogro
+// Enemy types
 class Ogre : public Enemy {
-    public:
-        Ogre(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+public:
+    Ogre(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+    Enemy* clone() const override;
+    void mutate(float mutationRate) override { Enemy::mutate(mutationRate); }
 };
 
-// Elfo Oscuro
 class DarkElf : public Enemy {
-    public:
-        DarkElf(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+public:
+    DarkElf(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+    Enemy* clone() const override;
+    void mutate(float mutationRate) override { Enemy::mutate(mutationRate); }
 };
 
-// Harpía
 class Harpy : public Enemy {
-    public:
-        Harpy(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+public:
+    Harpy(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+    Enemy* clone() const override;
+    void mutate(float mutationRate) override { Enemy::mutate(mutationRate); }
 };
 
-// Mercenario
 class Mercenary : public Enemy {
-    public:
-        Mercenary(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
-};
+public:
+    Mercenary(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
+    Enemy* clone() const override;
+    void mutate(float mutationRate) override { Enemy::mutate(mutationRate); }
+}; 

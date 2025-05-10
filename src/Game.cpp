@@ -7,6 +7,7 @@
 #include <numeric>
 #include "Tower.h"
 #include "Astar.h"
+#include "WaveManager.h"
 
 SDL_Texture* ogreTexture = nullptr;
 SDL_Texture* darkElfTexture = nullptr;
@@ -14,7 +15,7 @@ SDL_Texture* harpyTexture = nullptr;
 SDL_Texture* mercenaryTexture = nullptr;
 TTF_Font* font = nullptr;
 
-Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0), gold(50), selectedTowerType(TowerType::Archer) {
+Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0), gold(50), selectedTowerType(TowerType::Archer), waveManager(std::vector<std::pair<int, int>>(), nullptr, nullptr, nullptr, nullptr) {
     // Inicializar el mapa 16x16 con un camino
     map = {
         {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -38,9 +39,6 @@ Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0)
 
     // Definir el camino como una lista de nodos
     path = aStarSearch(map, {0, 0}, {15, 14}); // Llamar a la función A* para obtener el camino
-    
-    
-    
 }
 
 Game::~Game() {
@@ -87,6 +85,9 @@ bool Game::init() {
         std::cerr << "SDL_ttf error: " << TTF_GetError() << "\n";
         return false;
     }
+
+    // Initialize WaveManager with the loaded textures
+    waveManager = WaveManager(path, ogreTexture, darkElfTexture, harpyTexture, mercenaryTexture);
 
     running = true;
     return true;
@@ -137,36 +138,85 @@ void Game::placeTower(int mouseX, int mouseY) {
 
     if (row >= 0 && row < mapSize && col >= 0 && col < mapSize && map[row][col] == 0) {
         // Coloca una torre del tipo seleccionado en la celda
-        towers.emplace_back(col * 75 + 37, row * 75 + 37, selectedTowerType);
+        towers.emplace_back(col * 75 + 37, row * 75 + 37, selectedTowerType, mapSize);
         map[row][col] = 2; // Marca la celda como ocupada
         gold -= Tower::getCost(selectedTowerType);
     }
 }
 
 void Game::update() {
+    waveTimer++;
     enemyTimer++;
-    if (enemyTimer >= 120) { // Cada 2 segundos
-        spawnEnemy();
-        enemyTimer = 0;
+    
+    // Update wave manager every frame to handle enemy spawning
+    waveManager.update();
+    
+    // Get any ready enemies and add them to the game
+    auto waveEnemies = waveManager.getCurrentWave();
+    if (!waveEnemies.empty()) {
+        for (auto& enemy : waveEnemies) {
+            if (enemy) {  // Make sure we have a valid enemy
+                enemies.push_back(std::move(enemy));
+            }
+        }
     }
-
-    for (auto& tower : towers)
+    
+    // If all enemies are gone and wave is inactive, prepare for next wave
+    bool noEnemiesLeft = enemies.empty();
+    
+    // Create a vector to store enemies that died this frame
+    std::vector<std::unique_ptr<Enemy>> deadEnemies;
+    
+    // Update enemies
+    for (auto it = enemies.begin(); it != enemies.end();) {
+        if (!(*it)) {  // Check for null pointer
+            it = enemies.erase(it);
+        } else if ((*it)->isDead() || (*it)->hasReachedEnd()) {
+            // Enemy died or reached end, save it for genetic algorithm
+            if (*it) {
+                // Add gold if enemy died
+                if ((*it)->isDead()) {
+                    gold += (*it)->getGold();
+                }
+                
+                // Move to dead enemies list for genetic algorithm
+                deadEnemies.push_back(std::move(*it));
+            }
+            it = enemies.erase(it);
+        } else {
+            (*it)->update();
+            ++it;
+        }
+    }
+    
+    // If we have dead enemies this frame, add them to the wave manager
+    if (!deadEnemies.empty()) {
+        waveManager.addProcessedEnemies(std::move(deadEnemies));
+    }
+    
+    // If wave just ended and all enemies are gone, save any remaining enemies
+    static bool wasWaveActive = true;
+    if ((wasWaveActive && !waveManager.isWaveActive()) || 
+        (!waveManager.isWaveActive() && noEnemiesLeft)) {
+        // Trigger new wave planning if appropriate
+        waveManager.prepareNextWave();
+    }
+    wasWaveActive = waveManager.isWaveActive();
+    
+    // Update towers
+    for (auto& tower : towers) {
         tower.update(enemies, projectiles);
-
-        for (auto& enemy : enemies)
-        enemy->update(); // Llamar a update() en el puntero
-
-    for (auto& projectile : projectiles)
-        projectile->update(); // Llamar a update() en el puntero
-
-    gold += std::accumulate(enemies.begin(), enemies.end(), 0,
-        [](int sum, const std::unique_ptr<Enemy>& e) { return sum + (e->isDead() ? e->getGold() : 0); });
-
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-        [](const std::unique_ptr<Enemy>& e) { return e->isDead(); }), enemies.end());
-
-    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
-        [](const std::unique_ptr<Projectile>& p) { return p->hasHit(); }), projectiles.end());
+    }
+    
+    // Update projectiles
+    for (auto it = projectiles.begin(); it != projectiles.end();) {
+        if (!(*it) || (*it)->hasHit()) {  // Check for null pointer
+            it = projectiles.erase(it);
+        } else {
+            (*it)->update();
+            ++it;
+        }
+    }
 }
 
 void Game::render() {

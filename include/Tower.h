@@ -13,10 +13,11 @@ enum class TowerType {
 
 class Tower {
 public:
-    Tower(int x, int y, TowerType type);
+    Tower(int x, int y, TowerType type, int mapSize);
     void update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std::unique_ptr<Projectile>>& projectiles);
     void render(SDL_Renderer* renderer);
     static int getCost(TowerType type);
+    bool isValid() const;
 
 private:
     int x, y;
@@ -27,6 +28,7 @@ private:
     int fireRate; // cuántos frames entre disparos
     int fireCooldown = 0;
     int cost;
+    int mapSize;
 
     int specialCooldown;        // total
     int currentSpecialCooldown; // en cuenta regresiva

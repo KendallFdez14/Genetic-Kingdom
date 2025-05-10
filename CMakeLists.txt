@@ -12,6 +12,8 @@ set(SOURCES
     src/Tower.cpp
     src/Projectile.cpp
     src/Astar.cpp
+    src/WaveManager.cpp
+    src/GeneticAlgorithm.cpp
 )
 
 add_executable(Genetic-Kingdom ${SOURCES})

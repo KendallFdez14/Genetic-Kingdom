@@ -6,7 +6,7 @@
 #include "Enemy.h"
 #include "Projectile.h"
 #include "Astar.h"
-
+#include "WaveManager.h"
 class Game {
 public:
     Game();
@@ -23,6 +23,7 @@ private:
     std::vector<std::vector<int>> map; // Representación del mapa
     std::vector<std::pair<int, int>> path; // Lista de nodos del camino
     int enemyTimer;
+    int waveTimer;
 
     std::vector<Tower> towers;
     std::vector<std::unique_ptr<Enemy>> enemies; // Cambiado a punteros inteligentes
@@ -41,4 +42,6 @@ private:
 
     int gold;
     int mapSize;
+
+    WaveManager waveManager;
 };

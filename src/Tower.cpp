@@ -2,8 +2,8 @@
 #include "Projectile.h"
 #include <cmath>
 
-Tower::Tower(int x, int y, TowerType type)
-    : x(x), y(y), type(type) {
+Tower::Tower(int x, int y, TowerType type, int mapSize)
+    : x(x), y(y), type(type), mapSize(mapSize) {
     configureStats(); // Configurar atributos según el tipo de torre
     currentSpecialCooldown = specialCooldown;
 }
@@ -89,4 +89,8 @@ int Tower::getCost(TowerType type) {
         case TowerType::Mage: return 20;
         case TowerType::Artillery: return 30;
     }
+}
+
+bool Tower::isValid() const {
+    return x >= 0 && x < mapSize && y >= 0 && y < mapSize;
 }
