@@ -24,14 +24,19 @@ private:
 
     int damage;
     int range;
-    int fireRate; // cuántos frames entre disparos
+    int fireRate; // Frames entre disparos normales
     int fireCooldown = 0;
+
+    // Atributos del ataque especial
+    int specialDamage;
+    int specialCooldown;        // Tiempo total de recarga
+    int currentSpecialCooldown; // Contador para la recarga
+    int specialEffectDuration = 0; // Duración del efecto especial (en frames)
+
     int cost;
 
-    int specialCooldown;        // total
-    int currentSpecialCooldown; // en cuenta regresiva
-
     void shoot(Enemy& target, std::vector<std::unique_ptr<Projectile>>& projectiles);
+    void shootSpecial(Enemy& target, std::vector<std::unique_ptr<Projectile>>& projectiles); // Nuevo método
     bool isInRange(const Enemy& enemy);
-    void configureStats(); // según el tipo
+    void configureStats(); // Configurar atributos según el tipo
 };

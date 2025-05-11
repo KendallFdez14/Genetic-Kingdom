@@ -39,3 +39,10 @@ class Bullet : public Projectile {
         Bullet(int x, int y, Enemy* target, int damage);
         void render(SDL_Renderer* renderer) override;
 };
+
+// Proyectil especial
+class SpecialProjectile : public Projectile {
+    public:
+        SpecialProjectile(int x, int y, Enemy* target, int damage);
+        void render(SDL_Renderer* renderer) override;
+};

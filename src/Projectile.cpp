@@ -73,4 +73,14 @@ void Bullet::render(SDL_Renderer* renderer) {
     SDL_RenderFillRect(renderer, &rect);
 }
 
+// Proyectil especial (proyectil rojo)
+SpecialProjectile::SpecialProjectile(int x, int y, Enemy* target, int damage)
+    : Projectile(x, y, target, damage) {}
+
+void SpecialProjectile::render(SDL_Renderer* renderer) {
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Rojo
+    SDL_Rect rect = { static_cast<int>(x) - 8, static_cast<int>(y) - 8, 16, 16 }; // Tamaño aumentado
+    SDL_RenderFillRect(renderer, &rect);
+}
+
 
