@@ -30,6 +30,9 @@ private:
 
     TowerType selectedTowerType; // Tipo de torre seleccionado
 
+    int mouseX = 0; // Posición X del mouse
+    int mouseY = 0; // Posición Y del mouse
+
     void handleEvents();
     void update();
     void render();

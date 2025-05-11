@@ -15,12 +15,16 @@ class Tower {
 public:
     Tower(int x, int y, TowerType type);
     void update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std::unique_ptr<Projectile>>& projectiles);
-    void render(SDL_Renderer* renderer);
+    void render(SDL_Renderer* renderer, bool isSelected = false); // Agregar parámetro para resaltar la torreta
     static int getCost(TowerType type);
+    bool upgrade(int& gold); // Método para mejorar la torreta
+    int getLevel() const; // Método para obtener el nivel de la torre
+    bool isMouseOver(int mouseX, int mouseY) const; // Verificar si el mouse está sobre la torreta
 
 private:
     int x, y;
     TowerType type;
+    int level = 1; // Nivel inicial de la torreta
 
     int damage;
     int range;
@@ -28,6 +32,7 @@ private:
     int fireCooldown = 0;
 
     // Atributos del ataque especial
+
     int specialDamage;
     int specialCooldown;        // Tiempo total de recarga
     int currentSpecialCooldown; // Contador para la recarga
@@ -36,7 +41,7 @@ private:
     int cost;
 
     void shoot(Enemy& target, std::vector<std::unique_ptr<Projectile>>& projectiles);
-    void shootSpecial(Enemy& target, std::vector<std::unique_ptr<Projectile>>& projectiles); // Nuevo método
+    void shootSpecial(Enemy& target, std::vector<std::unique_ptr<Projectile>>& projectiles);  
+    void configureStats();
     bool isInRange(const Enemy& enemy);
-    void configureStats(); // Configurar atributos según el tipo
 };

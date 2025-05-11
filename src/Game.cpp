@@ -106,6 +106,9 @@ void Game::handleEvents() {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
             running = false;
+        } else if (event.type == SDL_MOUSEMOTION) {
+            mouseX = event.motion.x;
+            mouseY = event.motion.y;
         } else if (event.type == SDL_MOUSEBUTTONDOWN) {
             if (event.button.button == SDL_BUTTON_LEFT) {
                 placeTower(event.button.x, event.button.y);
@@ -120,6 +123,19 @@ void Game::handleEvents() {
                     break;
                 case SDLK_3:
                     selectedTowerType = TowerType::Artillery;
+                    break;
+                case SDLK_w:
+                    // Intentar mejorar la torreta seleccionada
+                    for (auto& tower : towers) {
+                        if (tower.isMouseOver(mouseX, mouseY)) { // Verificar si el mouse está sobre la torreta
+                            if (tower.upgrade(gold)) {
+                                std::cout << "Torreta mejorada al nivel " << tower.getLevel() << "\n";
+                            } else {
+                                std::cout << "No se pudo mejorar la torreta.\n";
+                            }
+                            break;
+                        }
+                    }
                     break;
             }
         }
@@ -170,19 +186,25 @@ void Game::update() {
 }
 
 void Game::render() {
-    SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
-    SDL_RenderClear(renderer);
+    // Renderizar el mapa
+    renderMap();
 
-    renderMap(); // Renderizar el mapa
+    // Renderizar las torretas
+    for (auto& tower : towers) {
+        bool isSelected = tower.isMouseOver(mouseX, mouseY); // Verificar si el mouse está sobre la torreta
+        tower.render(renderer, isSelected);
+    }
+
+    // Renderizar enemigos y proyectiles
+    for (auto& enemy : enemies) {
+        enemy->render(renderer);
+    }
+    for (auto& projectile : projectiles) {
+        projectile->render(renderer);
+    }
+
+    // Renderizar el panel lateral (incluye el oro)
     renderPannel();
-    for (auto& tower : towers)
-        tower.render(renderer);
-
-        for (auto& enemy : enemies)
-        enemy->render(renderer); // Llamar a render() en el puntero
-
-    for (auto& projectile : projectiles)
-        projectile->render(renderer); // Llamar a render() en el puntero
 
     SDL_RenderPresent(renderer);
 }
@@ -225,24 +247,38 @@ void Game::spawnEnemy() {
 }
 
 void Game::renderPannel() {
-    //Background
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    // Fondo del panel
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Blanco
     SDL_Rect pannel = {mapSize * 75, 0, 200, mapSize * 75};
     SDL_RenderFillRect(renderer, &pannel);
 
-    //padding (10)
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_Rect pannelRect = {mapSize * 75 + 10, 10, 180, mapSize * 75};
+    // Borde del panel
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Negro
+    SDL_Rect pannelRect = {mapSize * 75 + 10, 10, 180, mapSize * 75 - 20};
     SDL_RenderDrawRect(renderer, &pannelRect);
 
-    //Gold Text
-    SDL_Color color = {0, 0, 0};
+    // Texto del oro
+    SDL_Color color = {0, 0, 0}; // Negro
     std::stringstream ss;
     ss << "Gold: " << gold;
+
     SDL_Surface* textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+    if (!textSurface) {
+        std::cerr << "Error al crear la superficie de texto: " << TTF_GetError() << "\n";
+        return;
+    }
+
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    SDL_Rect textRect = {mapSize * 75 + 10, 10, textSurface->w, textSurface->h};
+    if (!textTexture) {
+        std::cerr << "Error al crear la textura de texto: " << SDL_GetError() << "\n";
+        SDL_FreeSurface(textSurface);
+        return;
+    }
+
+    SDL_Rect textRect = {mapSize * 75 + 20, 20, textSurface->w, textSurface->h};
     SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+    
+    // Liberar recursos
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
 }

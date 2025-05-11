@@ -84,7 +84,7 @@ void Tower::shootSpecial(Enemy& target, std::vector<std::unique_ptr<Projectile>>
             break;
         case TowerType::Artillery:
             // Aumentar la velocidad de ataque por 2 segundos
-            fireRate /= 8; // Duplicar la velocidad de ataque
+            fireRate /= 4; // Duplicar la velocidad de ataque
             specialEffectDuration = 120; // Duración del efecto especial (2 segundos a 60 FPS)
             break;
     }
@@ -99,13 +99,16 @@ void Tower::update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std
     if (specialEffectDuration > 0) {
         specialEffectDuration--;
         if (specialEffectDuration == 0) {
-            fireRate *= 2; // Restaurar la velocidad de ataque original
+            fireRate *= 4; // Restaurar la velocidad de ataque original
         }
     }
 
-    // Si el ataque especial está listo, usarlo con una probabilidad del 50%
+    // Calcular la probabilidad de ejecutar el ataque especial según el nivel
+    int specialAttackChance = (level - 1) * 25; // 0% para nivel 1, 25% para nivel 2, 50% para nivel 3, 75% para nivel 4
+
+    // Si el ataque especial está listo, usarlo con la probabilidad calculada
     if (currentSpecialCooldown <= 0) {
-        if (std::rand() % 100 < 50) { // Generar un número entre 0 y 99, 50% de probabilidad
+        if (std::rand() % 100 < specialAttackChance) { // Generar un número entre 0 y 99
             for (auto& enemy : enemies) {
                 if (isInRange(*enemy)) {
                     shootSpecial(*enemy, projectiles);
@@ -128,7 +131,8 @@ void Tower::update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std
     }
 }
 
-void Tower::render(SDL_Renderer* renderer) {
+void Tower::render(SDL_Renderer* renderer, bool isSelected) {
+    // Renderizar la torreta
     switch (type) {
         case TowerType::Archer: SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); break;
         case TowerType::Mage: SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); break;
@@ -136,6 +140,31 @@ void Tower::render(SDL_Renderer* renderer) {
     }
     SDL_Rect rect = { x - 10, y - 10, 20, 20 };
     SDL_RenderFillRect(renderer, &rect);
+
+    // Dibujar una línea blanca si la torreta está seleccionada
+    if (isSelected) {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Blanco
+        SDL_RenderDrawLine(renderer, x - 10, y - 10, x + 10, y + 10);
+        SDL_RenderDrawLine(renderer, x - 10, y + 10, x + 10, y - 10);
+    }
+
+    // Dibujar indicadores de nivel
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // Amarillo
+    int indicatorSize = 5; // Tamaño del indicador
+    int spacing = 2;       // Espaciado entre indicadores
+    int totalWidth = (level - 1) * (indicatorSize + spacing) - spacing; // Ancho total de los indicadores
+    int startX = x - totalWidth / 2; // Coordenada X inicial para centrar los indicadores
+
+    for (int i = 0; i < level - 1; ++i) {
+        SDL_Rect indicator = { startX + i * (indicatorSize + spacing), y - 20, indicatorSize, indicatorSize };
+        SDL_RenderFillRect(renderer, &indicator);
+    }
+}
+
+bool Tower::isMouseOver(int mouseX, int mouseY) const {
+    int halfSize = 10; // Tamaño de la torreta (20x20 píxeles)
+    return mouseX >= x - halfSize && mouseX <= x + halfSize &&
+           mouseY >= y - halfSize && mouseY <= y + halfSize;
 }
 
 int Tower::getCost(TowerType type) {
@@ -144,4 +173,25 @@ int Tower::getCost(TowerType type) {
         case TowerType::Mage: return 20;
         case TowerType::Artillery: return 30;
     }
+}
+
+bool Tower::upgrade(int& gold) {
+    int upgradeCost = cost * (level + 1); // Costo de mejora basado en el nivel actual
+    if (gold >= upgradeCost && level < 4) { // Máximo nivel es 4
+        gold -= upgradeCost;
+        level++;
+
+        // Incrementar atributos en un 33%
+        damage = static_cast<int>(damage * 1.33); //Aumentar dano 33%
+        range = static_cast<int>(range * 1.25); // Aumentar rango 25%
+        fireRate = static_cast<int>(fireRate * 0.85); // Reducir tiempo entre disparos 15%
+        specialDamage = static_cast<int>(specialDamage * 1.1); // Aumentar daño especial 10%
+
+        return true; // Mejora exitosa
+    }
+    return false; // No se pudo mejorar (oro insuficiente o nivel máximo alcanzado)
+}
+
+int Tower::getLevel() const {
+    return level;
 }
