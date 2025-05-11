@@ -195,3 +195,7 @@ bool Tower::upgrade(int& gold) {
 int Tower::getLevel() const {
     return level;
 }
+
+TowerType Tower::getType() const {
+    return type;
+}

@@ -9,9 +9,11 @@ Enemy::Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, int hea
 void Enemy::update() {
     if (currentNode >= path.size()) return; // Si ya llegó al final del camino
 
+    // Coordenadas del nodo objetivo
     int targetX = path[currentNode].first * 75 + 37; // Centro de la celda
     int targetY = path[currentNode].second * 75 + 37;
 
+    // Calcular la distancia al nodo objetivo
     float dx = targetX - x;
     float dy = targetY - y;
     float dist = std::sqrt(dx * dx + dy * dy);
@@ -33,18 +35,24 @@ void Enemy::render(SDL_Renderer* renderer) {
     SDL_RenderCopy(renderer, texture, nullptr, &rect); // Renderizar la textura
 }
 
-void Enemy::takeDamage(int dmg, const std::string& type) {
+void Enemy::takeDamage(int damage, const std::string& type) {
     if (type == "arrow") {
-        health -= static_cast<int>(dmg * (1.0f - arrowResistance));
+        health -= static_cast<int>(damage * (1.0f - arrowResistance));
     } else if (type == "magic") {
-        health -= static_cast<int>(dmg * (1.0f - magicResistance));
+        health -= static_cast<int>(damage * (1.0f - magicResistance));
     } else if (type == "artillery") {
-        health -= static_cast<int>(dmg * (1.0f - artilleryResistance));
+        health -= static_cast<int>(damage * (1.0f - artilleryResistance));
+    } else if (type == "special") {
+        health -= damage; // Daño especial sin resistencias
     }
 }
 
 bool Enemy::isDead() const {
     return health <= 0;
+}
+
+bool Enemy::hasReachedEnd() const {
+    return currentNode >= path.size(); // Si el enemigo ha pasado el último nodo
 }
 
 int Enemy::getX() const { return x; }

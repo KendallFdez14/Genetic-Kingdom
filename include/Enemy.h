@@ -10,15 +10,17 @@ class Enemy {
 
         void update();
         void render(SDL_Renderer* renderer);
-        void takeDamage(int dmg, const std::string& type);
+        void takeDamage(int damage, const std::string& type);
         bool isDead() const;
         int getX() const;
         int getY() const;
         int getGold() const;
+        bool hasReachedEnd() const; // Verificar si el enemigo llegó al final del camino
     protected:
         int x, y;
-        float speed;
         int health;
+        int gold;
+        float speed;
 
         float arrowResistance;
         float magicResistance;
@@ -28,8 +30,6 @@ class Enemy {
         size_t currentNode = 0;
 
         SDL_Texture* texture; // Textura del enemigo
-
-        int gold;
 };
 
 // Ogro

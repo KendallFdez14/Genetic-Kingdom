@@ -14,7 +14,7 @@ SDL_Texture* harpyTexture = nullptr;
 SDL_Texture* mercenaryTexture = nullptr;
 TTF_Font* font = nullptr;
 
-Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0), gold(50), selectedTowerType(TowerType::Archer) {
+Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0), gold(50), selectedTowerType(TowerType::Archer), enemiesDefeated(0), enemiesReachedEnd(0) {
     // Inicializar el mapa 16x16 con un camino
     map = {
         {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
@@ -38,9 +38,6 @@ Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0)
 
     // Definir el camino como una lista de nodos
     path = aStarSearch(map, {0, 0}, {15, 14}); // Llamar a la función A* para obtener el camino
-    
-    
-    
 }
 
 Game::~Game() {
@@ -99,6 +96,11 @@ void Game::run() {
         render();
         SDL_Delay(16); // ~60 FPS
     }
+
+    // Mostrar pantalla de derrota si el jugador pierde
+    if (enemiesReachedEnd >= 5) {
+        renderDefeatScreen();
+    }
 }
 
 void Game::handleEvents() {
@@ -127,9 +129,9 @@ void Game::handleEvents() {
                 case SDLK_w:
                     // Intentar mejorar la torreta seleccionada
                     for (auto& tower : towers) {
-                        if (tower.isMouseOver(mouseX, mouseY)) { // Verificar si el mouse está sobre la torreta
-                            if (tower.upgrade(gold)) {
-                                std::cout << "Torreta mejorada al nivel " << tower.getLevel() << "\n";
+                        if (tower->isMouseOver(mouseX, mouseY)) { // Verificar si el mouse está sobre la torreta
+                            if (tower->upgrade(gold)) {
+                                std::cout << "Torreta mejorada al nivel " << tower->getLevel() << "\n";
                             } else {
                                 std::cout << "No se pudo mejorar la torreta.\n";
                             }
@@ -153,7 +155,7 @@ void Game::placeTower(int mouseX, int mouseY) {
 
     if (row >= 0 && row < mapSize && col >= 0 && col < mapSize && map[row][col] == 0) {
         // Coloca una torre del tipo seleccionado en la celda
-        towers.emplace_back(col * 75 + 37, row * 75 + 37, selectedTowerType);
+        towers.emplace_back(std::make_unique<Tower>(col * 75 + 37, row * 75 + 37, selectedTowerType));
         map[row][col] = 2; // Marca la celda como ocupada
         gold -= Tower::getCost(selectedTowerType);
     }
@@ -166,23 +168,50 @@ void Game::update() {
         enemyTimer = 0;
     }
 
-    for (auto& tower : towers)
-        tower.update(enemies, projectiles);
+    // Actualizar enemigos
+    for (auto it = enemies.begin(); it != enemies.end();) {
+        (*it)->update();
 
-        for (auto& enemy : enemies)
-        enemy->update(); // Llamar a update() en el puntero
+        // Verificar si el enemigo llegó al final del camino
+        if ((*it)->hasReachedEnd()) {
+            enemiesReachedEnd++; // Incrementar el contador
+            it = enemies.erase(it); // Eliminar enemigo de la lista
 
-    for (auto& projectile : projectiles)
-        projectile->update(); // Llamar a update() en el puntero
+            // Verificar condición de derrota
+            if (enemiesReachedEnd >= 5) {
+                running = false; // Detener el juego
+                return;
+            }
+        } else {
+            ++it;
+        }
+    }
 
-    gold += std::accumulate(enemies.begin(), enemies.end(), 0,
-        [](int sum, const std::unique_ptr<Enemy>& e) { return sum + (e->isDead() ? e->getGold() : 0); });
+    // Actualizar torretas
+    for (auto& tower : towers) {
+        tower->update(enemies, projectiles);
+    }
 
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-        [](const std::unique_ptr<Enemy>& e) { return e->isDead(); }), enemies.end());
+    // Actualizar proyectiles
+    for (auto it = projectiles.begin(); it != projectiles.end();) {
+        (*it)->update();
+        if ((*it)->hasHit()) {
+            it = projectiles.erase(it); // Eliminar proyectil si ha impactado
+        } else {
+            ++it;
+        }
+    }
 
-    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
-        [](const std::unique_ptr<Projectile>& p) { return p->hasHit(); }), projectiles.end());
+    // Incrementar el contador de enemigos eliminados y acumular oro
+    for (auto it = enemies.begin(); it != enemies.end();) {
+        if ((*it)->isDead()) {
+            gold += (*it)->getGold(); // Acumular oro del enemigo eliminado
+            enemiesDefeated++;       // Incrementar el contador de enemigos eliminados
+            it = enemies.erase(it);  // Eliminar enemigo de la lista
+        } else {
+            ++it;
+        }
+    }
 }
 
 void Game::render() {
@@ -191,8 +220,8 @@ void Game::render() {
 
     // Renderizar las torretas
     for (auto& tower : towers) {
-        bool isSelected = tower.isMouseOver(mouseX, mouseY); // Verificar si el mouse está sobre la torreta
-        tower.render(renderer, isSelected);
+        bool isSelected = tower->isMouseOver(mouseX, mouseY); // Verificar si el mouse está sobre la torreta
+        tower->render(renderer, isSelected);
     }
 
     // Renderizar enemigos y proyectiles
@@ -225,7 +254,7 @@ void Game::renderMap() {
 }
 
 void Game::spawnEnemy() {
-    // Alternar entre diferentes tipos de enemigos
+// Alternar entre diferentes tipos de enemigos
     static int enemyType = 0;
 
     switch (enemyType) {
@@ -249,12 +278,12 @@ void Game::spawnEnemy() {
 void Game::renderPannel() {
     // Fondo del panel
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Blanco
-    SDL_Rect pannel = {mapSize * 75, 0, 200, mapSize * 75};
+    SDL_Rect pannel = {mapSize * 75, 0, 250, mapSize * 75}; // Ancho del panel ajustado a 250
     SDL_RenderFillRect(renderer, &pannel);
 
     // Borde del panel
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Negro
-    SDL_Rect pannelRect = {mapSize * 75 + 10, 10, 180, mapSize * 75 - 20};
+    SDL_Rect pannelRect = {mapSize * 75 + 10, 10, 230, mapSize * 75 - 20};
     SDL_RenderDrawRect(renderer, &pannelRect);
 
     // Texto del oro
@@ -262,25 +291,70 @@ void Game::renderPannel() {
     std::stringstream ss;
     ss << "Gold: " << gold;
 
-    SDL_Surface* textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
-    if (!textSurface) {
-        std::cerr << "Error al crear la superficie de texto: " << TTF_GetError() << "\n";
-        return;
-    }
-
+    SDL_Surface* textSurface = TTF_RenderText_Blended_Wrapped(font, ss.str().c_str(), color, 220); // Ajustar ancho del texto
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    if (!textTexture) {
-        std::cerr << "Error al crear la textura de texto: " << SDL_GetError() << "\n";
-        SDL_FreeSurface(textSurface);
-        return;
-    }
-
     SDL_Rect textRect = {mapSize * 75 + 20, 20, textSurface->w, textSurface->h};
     SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
-    
-    // Liberar recursos
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
+
+    // Mostrar la cantidad de enemigos eliminados
+    std::stringstream defeatedInfo;
+    defeatedInfo << "Enemies Defeated: " << enemiesDefeated;
+
+    SDL_Surface* defeatedSurface = TTF_RenderText_Blended_Wrapped(font, defeatedInfo.str().c_str(), color, 220);
+    SDL_Texture* defeatedTexture = SDL_CreateTextureFromSurface(renderer, defeatedSurface);
+    SDL_Rect defeatedRect = {mapSize * 75 + 20, 50, defeatedSurface->w, defeatedSurface->h};
+    SDL_RenderCopy(renderer, defeatedTexture, nullptr, &defeatedRect);
+    SDL_FreeSurface(defeatedSurface);
+    SDL_DestroyTexture(defeatedTexture);
+
+    // Mostrar el nivel y tipo de torre si el mouse está sobre una torreta
+    for (auto& tower : towers) {
+        if (tower->isMouseOver(mouseX, mouseY)) {
+            std::stringstream towerInfo;
+            towerInfo << "Tower: " << (tower->getType() == TowerType::Archer ? "Archer" :
+                                        tower->getType() == TowerType::Mage ? "Mage" : "Artillery");
+            towerInfo << " (Level " << tower->getLevel() << ")";
+
+            SDL_Surface* towerSurface = TTF_RenderText_Blended_Wrapped(font, towerInfo.str().c_str(), color, 220);
+            SDL_Texture* towerTexture = SDL_CreateTextureFromSurface(renderer, towerSurface);
+            SDL_Rect towerRect = {mapSize * 75 + 20, 100, towerSurface->w, towerSurface->h}; // Cambiar posición a 100
+            SDL_RenderCopy(renderer, towerTexture, nullptr, &towerRect);
+            SDL_FreeSurface(towerSurface);
+            SDL_DestroyTexture(towerTexture);
+            break;
+        }
+    }
+}
+
+void Game::renderDefeatScreen() {
+    // Limpiar la pantalla
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Negro
+    SDL_RenderClear(renderer);
+
+    // Mostrar mensaje de derrota
+    SDL_Color color = {255, 0, 0}; // Rojo
+    std::string message = "You Lost! Press ESC to Exit.";
+    SDL_Surface* surface = TTF_RenderText_Blended(font, message.c_str(), color);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_Rect rect = {mapSize * 75 / 2 - surface->w / 2, mapSize * 75 / 2 - surface->h / 2, surface->w, surface->h};
+    SDL_RenderCopy(renderer, texture, nullptr, &rect);
+
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+
+    SDL_RenderPresent(renderer);
+
+    // Esperar a que el jugador presione ESC
+    SDL_Event event;
+    while (true) {
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
+                return;
+            }
+        }
+    }
 }
 
 void Game::clean() {

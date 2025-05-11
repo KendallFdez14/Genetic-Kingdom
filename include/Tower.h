@@ -20,6 +20,7 @@ public:
     bool upgrade(int& gold); // Método para mejorar la torreta
     int getLevel() const; // Método para obtener el nivel de la torre
     bool isMouseOver(int mouseX, int mouseY) const; // Verificar si el mouse está sobre la torreta
+    TowerType getType() const; // Obtener el tipo de la torre
 
 private:
     int x, y;
