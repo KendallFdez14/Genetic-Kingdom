@@ -45,7 +45,7 @@ std::vector<Pair> tracePath(cell cellDetails[][COL], Pair dest){
 
     std::vector<Pair> path;
 
-    printf("\nThe Path is: ");
+    
     int row = dest.first;
     int col = dest.second;
 
@@ -107,6 +107,12 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
         printf("We are already at the destination\n");
         return {};
     }
+
+    //Definimos el peso de cada movimiento
+    //Vertical, Horizontal y Diagonal
+    double peso_vert = 1.0;
+    double peso_hor = 1.0;
+    double peso_diag = 3.0;
 
     //Creamos la "closed list" como una matriz que guarda los nodos ya visitados
     bool closedList[ROW][COL];
@@ -193,7 +199,7 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
 
             //Si el sucesor esta en la closed list o esta bloqueado, lo ignoramos
             else if (closedList[i - 1][j] == false && isUnBlocked(grid, i - 1, j) == true) {
-                gNew = cellDetails[i][j].g + 1.0; //"Peso" del movimiento vertical
+                gNew = cellDetails[i][j].g + peso_vert; //"Peso" del movimiento vertical
                 hNew = calcHValue(i - 1, j, dest);
                 fNew = gNew + hNew;
 
@@ -236,7 +242,7 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
 
             //Si el sucesor esta en la closed list o esta bloqueado, lo ignoramos
             else if (closedList[i + 1][j] == false && isUnBlocked(grid, i + 1, j) == true) {
-                gNew = cellDetails[i][j].g + 1.0; //"Peso" del movimiento vertical
+                gNew = cellDetails[i][j].g + peso_vert; //"Peso" del movimiento vertical
                 hNew = calcHValue(i + 1, j, dest);
                 fNew = gNew + hNew;
 
@@ -278,7 +284,7 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
 
             //Si el sucesor esta en la closed list o esta bloqueado, lo ignoramos
             else if (closedList[i][j + 1] == false && isUnBlocked(grid, i, j + 1) == true) {
-                gNew = cellDetails[i][j].g + 1.0; //"Peso" del movimiento horizontal
+                gNew = cellDetails[i][j].g + peso_hor; //"Peso" del movimiento horizontal
                 hNew = calcHValue(i, j + 1, dest);
                 fNew = gNew + hNew;
 
@@ -320,7 +326,7 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
 
             //Si el sucesor esta en la closed list o esta bloqueado, lo ignoramos
             else if (closedList[i][j - 1] == false && isUnBlocked(grid, i, j - 1) == true) {
-                gNew = cellDetails[i][j].g + 1.0; //"Peso" del movimiento horizontal
+                gNew = cellDetails[i][j].g + peso_hor; //"Peso" del movimiento horizontal
                 hNew = calcHValue(i, j - 1, dest);
                 fNew = gNew + hNew;
 
@@ -362,7 +368,7 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
 
             //Si el sucesor esta en la closed list o esta bloqueado, lo ignoramos
             else if (closedList[i - 1][j + 1] == false && isUnBlocked(grid, i - 1, j + 1) == true) {
-                gNew = cellDetails[i][j].g + 3.0; //Diagonal, mas "peso"
+                gNew = cellDetails[i][j].g + peso_diag; //Diagonal, mas "peso"
                 hNew = calcHValue(i - 1, j + 1, dest);
                 fNew = gNew + hNew;
 
@@ -404,7 +410,7 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
 
             //Si el sucesor esta en la closed list o esta bloqueado, lo ignoramos
             else if (closedList[i - 1][j - 1] == false && isUnBlocked(grid, i - 1, j - 1) == true) {
-                gNew = cellDetails[i][j].g + 3.0; //Diagonal, mas "peso"
+                gNew = cellDetails[i][j].g + peso_diag; //Diagonal, mas "peso"
                 hNew = calcHValue(i - 1, j - 1, dest);
                 fNew = gNew + hNew;
 
@@ -446,7 +452,7 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
 
             //Si el sucesor esta en la closed list o esta bloqueado, lo ignoramos
             else if (closedList[i + 1][j + 1] == false && isUnBlocked(grid, i + 1, j + 1) == true) {
-                gNew = cellDetails[i][j].g + 3.0; //Diagonal, mas "peso"
+                gNew = cellDetails[i][j].g + peso_diag; //Diagonal, mas "peso"
                 hNew = calcHValue(i + 1, j + 1, dest);
                 fNew = gNew + hNew;
 
@@ -488,7 +494,7 @@ std::vector<Pair> aStarSearch(std::vector<std::vector<int>> grid, Pair src, Pair
 
             //Si el sucesor esta en la closed list o esta bloqueado, lo ignoramos
             else if (closedList[i + 1][j - 1] == false && isUnBlocked(grid, i + 1, j - 1) == true) {
-                gNew = cellDetails[i][j].g + 3.0; //Diagonal, mas "peso"
+                gNew = cellDetails[i][j].g + peso_diag; //Diagonal, mas "peso"
                 hNew = calcHValue(i + 1, j - 1, dest);
                 fNew = gNew + hNew;
 
