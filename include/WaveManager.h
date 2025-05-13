@@ -32,6 +32,8 @@ private:
     int waveTimer = 0;
     GeneticAlgorithm geneticAlgorithm;
     bool wasWaveActive = true; // Track previous wave state
+    int enemiesDefeated = 0;
+    int enemiesReachedEnd = 0;
     
     // Store fitness statistics for display
     FitnessStats lastWaveFitness;
@@ -63,4 +65,7 @@ public:
     
     // Calculate fitness statistics for the current wave
     void calculateFitnessStats();
+
+    int getEnemiesDefeated() const { return enemiesDefeated; }
+    int getEnemiesReachedEnd() const { return enemiesReachedEnd; }
 }; 

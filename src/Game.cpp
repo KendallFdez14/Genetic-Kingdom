@@ -169,6 +169,9 @@ void Game::placeTower(int mouseX, int mouseY) {
 void Game::update() {
     waveTimer++;
     enemyTimer++;
+
+    enemiesDefeated = waveManager.getEnemiesDefeated();
+    enemiesReachedEnd = waveManager.getEnemiesReachedEnd();
     
     // Update wave manager every frame to handle enemy spawning
     waveManager.update();

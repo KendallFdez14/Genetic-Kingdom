@@ -243,6 +243,12 @@ std::pair<std::vector<std::unique_ptr<Enemy>>, int> WaveManager::processActiveEn
         if (!(*it)) {  // Check for null pointer
             it = activeEnemies.erase(it);
         } else if ((*it)->isDead() || (*it)->hasReachedEnd()) {
+            if ((*it)->isDead()) {
+                enemiesDefeated++;
+            }
+            if ((*it)->hasReachedEnd()) {
+                enemiesReachedEnd++;
+            }
             // Enemy died or reached end, save it for genetic algorithm
             if (*it) {
                 // Add gold if enemy died
