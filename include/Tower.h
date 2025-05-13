@@ -17,14 +17,10 @@ public:
     void update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std::unique_ptr<Projectile>>& projectiles);
     void render(SDL_Renderer* renderer, bool isSelected = false); // Agregar parámetro para resaltar la torreta
     static int getCost(TowerType type);
-<<<<<<< HEAD
-    bool isValid() const;
-=======
     bool upgrade(int& gold); // Método para mejorar la torreta
     int getLevel() const; // Método para obtener el nivel de la torre
     bool isMouseOver(int mouseX, int mouseY) const; // Verificar si el mouse está sobre la torreta
     TowerType getType() const; // Obtener el tipo de la torre
->>>>>>> Develop
 
 private:
     int x, y;

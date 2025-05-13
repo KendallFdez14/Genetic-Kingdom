@@ -13,8 +13,8 @@ public:
     ~Game();
     bool init();
     void run();
-<<<<<<< HEAD
     void clean();
+    void renderDefeatScreen();
 
 private:
     SDL_Window* window;
@@ -25,10 +25,15 @@ private:
     std::vector<std::pair<int, int>> path; // Lista de nodos del camino
     int enemyTimer;
     int waveTimer;
-    float timeScale; // Time scale factor for debugging
+    float timeScale = 1.0f; // Time scale factor for debugging
+    int mouseX = 0;
+    int mouseY = 0;
+    
+    int enemiesDefeated = 0;
+    int enemiesReachedEnd = 0;
 
-    std::vector<Tower> towers;
-    std::vector<std::unique_ptr<Enemy>> enemies; // Cambiado a punteros inteligentes
+    std::vector<std::unique_ptr<Tower>> towers; // Changed to store unique_ptr
+    std::vector<std::unique_ptr<Enemy>> enemies;
     std::vector<std::unique_ptr<Projectile>> projectiles;
 
     TowerType selectedTowerType; // Tipo de torre seleccionado
@@ -36,38 +41,13 @@ private:
     void handleEvents();
     void update();
     void render();
-=======
-    void handleEvents();
-    void update();
-    void render();
-    void clean();
->>>>>>> Develop
 
-private:
     void renderMap();
     void renderPannel();
-    void spawnEnemy();
     void placeTower(int mouseX, int mouseY);
-    void renderDefeatScreen(); // Declarar la función aquí
 
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    bool running;
-    int enemyTimer;
     int gold;
-    int enemiesDefeated;
-    int enemiesReachedEnd;
-    int mouseX, mouseY;
-    TowerType selectedTowerType;
-    std::vector<std::vector<int>> map;
     int mapSize;
-<<<<<<< HEAD
 
     WaveManager waveManager;
-=======
-    std::vector<std::pair<int, int>> path;
-    std::vector<std::unique_ptr<Enemy>> enemies;
-    std::vector<std::unique_ptr<Tower>> towers;
-    std::vector<std::unique_ptr<Projectile>> projectiles;
->>>>>>> Develop
 };

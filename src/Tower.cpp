@@ -169,16 +169,17 @@ bool Tower::isMouseOver(int mouseX, int mouseY) const {
 
 int Tower::getCost(TowerType type) {
     switch (type) {
-        case TowerType::Archer: return 10;
-        case TowerType::Mage: return 20;
-        case TowerType::Artillery: return 30;
+        case TowerType::Archer:
+            return 10;
+        case TowerType::Mage:
+            return 15;
+        case TowerType::Artillery:
+            return 20;
+        default:
+            return 10; // Default cost if type is not recognized
     }
 }
 
-<<<<<<< HEAD
-bool Tower::isValid() const {
-    return x >= 0 && x < mapSize && y >= 0 && y < mapSize;
-=======
 bool Tower::upgrade(int& gold) {
     int upgradeCost = cost * (level + 1); // Costo de mejora basado en el nivel actual
     if (gold >= upgradeCost && level < 4) { // Máximo nivel es 4
@@ -202,5 +203,4 @@ int Tower::getLevel() const {
 
 TowerType Tower::getType() const {
     return type;
->>>>>>> Develop
 }
