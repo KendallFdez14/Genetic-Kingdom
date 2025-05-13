@@ -26,6 +26,7 @@ protected:
     float distanceTraveled = 0;
     float pathLength = 0;
 
+<<<<<<< HEAD
 public:
     Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, 
           int health, float speed, float arrowRes, float magicRes, 
@@ -76,6 +77,30 @@ public:
     static Enemy* crossover(const Enemy* parent1, const Enemy* parent2,
                            const std::vector<std::pair<int, int>>& path,
                            SDL_Texture* texture);
+=======
+        void update();
+        void render(SDL_Renderer* renderer);
+        void takeDamage(int damage, const std::string& type);
+        bool isDead() const;
+        int getX() const;
+        int getY() const;
+        int getGold() const;
+        bool hasReachedEnd() const; // Verificar si el enemigo llegó al final del camino
+    protected:
+        int x, y;
+        int health;
+        int gold;
+        float speed;
+
+        float arrowResistance;
+        float magicResistance;
+        float artilleryResistance;
+
+        std::vector<std::pair<int, int>> path;
+        size_t currentNode = 0;
+
+        SDL_Texture* texture; // Textura del enemigo
+>>>>>>> Develop
 };
 
 // Enemy types

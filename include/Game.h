@@ -13,6 +13,7 @@ public:
     ~Game();
     bool init();
     void run();
+<<<<<<< HEAD
     void clean();
 
 private:
@@ -35,13 +36,38 @@ private:
     void handleEvents();
     void update();
     void render();
+=======
+    void handleEvents();
+    void update();
+    void render();
+    void clean();
+>>>>>>> Develop
 
+private:
     void renderMap();
     void renderPannel();
+    void spawnEnemy();
     void placeTower(int mouseX, int mouseY);
+    void renderDefeatScreen(); // Declarar la función aquí
 
+    SDL_Window* window;
+    SDL_Renderer* renderer;
+    bool running;
+    int enemyTimer;
     int gold;
+    int enemiesDefeated;
+    int enemiesReachedEnd;
+    int mouseX, mouseY;
+    TowerType selectedTowerType;
+    std::vector<std::vector<int>> map;
     int mapSize;
+<<<<<<< HEAD
 
     WaveManager waveManager;
+=======
+    std::vector<std::pair<int, int>> path;
+    std::vector<std::unique_ptr<Enemy>> enemies;
+    std::vector<std::unique_ptr<Tower>> towers;
+    std::vector<std::unique_ptr<Projectile>> projectiles;
+>>>>>>> Develop
 };
