@@ -65,9 +65,9 @@ void WaveManager::startNewWave() {
 }
 
 std::vector<std::unique_ptr<Enemy>> WaveManager::generateInitialWave() {
-    // Create 2 enemies of each type, for a total of 8 enemies
+    // Create 3 enemies of each type, for a total of 12 enemies
     std::vector<std::unique_ptr<Enemy>> initialWave;
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         initialWave.push_back(std::make_unique<Ogre>(0, 0, path, ogreTexture));
         initialWave.push_back(std::make_unique<DarkElf>(0, 0, path, darkElfTexture));
         initialWave.push_back(std::make_unique<Harpy>(0, 0, path, harpyTexture));
@@ -143,17 +143,58 @@ void WaveManager::addProcessedEnemies(std::vector<std::unique_ptr<Enemy>> deadEn
     }
 }
 
+void WaveManager::calculateFitnessStats() {
+    if (processedEnemies.empty()) {
+        return; // No enemies to calculate stats for
+    }
+    
+    float totalFitness = 0.0f;
+    float maxFitness = 0.0f;
+    float minFitness = std::numeric_limits<float>::max();
+    
+    // Calculate fitness statistics
+    for (const auto& enemy : processedEnemies) {
+        float fitness = enemy->calculateFitness();
+        totalFitness += fitness;
+        
+        if (fitness > maxFitness) {
+            maxFitness = fitness;
+        }
+        
+        if (fitness < minFitness) {
+            minFitness = fitness;
+        }
+    }
+    
+    // Update fitness stats
+    lastWaveFitness.averageFitness = totalFitness / processedEnemies.size();
+    lastWaveFitness.maxFitness = maxFitness;
+    lastWaveFitness.minFitness = minFitness;
+    lastWaveFitness.generation = geneticAlgorithm.getGeneration();
+    lastWaveFitness.mutationRate = geneticAlgorithm.getMutationRate();
+    
+    std::cout << "Wave " << currentWaveNumber << " Fitness Stats: " 
+              << "Avg: " << lastWaveFitness.averageFitness
+              << ", Max: " << lastWaveFitness.maxFitness
+              << ", Min: " << lastWaveFitness.minFitness
+              << ", Gen: " << lastWaveFitness.generation
+              << ", Mutation: " << lastWaveFitness.mutationRate * 100.0f << "%" << std::endl;
+}
+
 void WaveManager::prepareNextWave() {
+    // Calculate fitness statistics for the processed enemies before preparing next wave
+    calculateFitnessStats();
+    
     // Combine processed enemies with any remaining enemies
     std::cout << "Preparing next wave with " << processedEnemies.size() << " processed enemies" << std::endl;
     
     // If we don't have enough processed enemies, create default ones
-    // We need at least 8 enemies total (4 parents to generate 4 children)
-    if (processedEnemies.size() < 8) {
-        std::cout << "Not enough processed enemies, adding default ones to reach 8" << std::endl;
+    // We need at least 12 enemies total (6 parents to generate 6 children)
+    if (processedEnemies.size() < 12) {
+        std::cout << "Not enough processed enemies, adding default ones to reach 12" << std::endl;
         
         // Calculate how many more enemies we need
-        int neededEnemies = 8 - processedEnemies.size();
+        int neededEnemies = 12 - processedEnemies.size();
         
         // Add enemies of each type in a balanced way
         int eachTypeCount = neededEnemies / 4;

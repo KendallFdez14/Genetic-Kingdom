@@ -9,12 +9,20 @@ GeneticAlgorithm::GeneticAlgorithm() {}
 
 std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::evolvePopulation(const std::vector<std::unique_ptr<Enemy>>& previousWave) {
     std::vector<std::unique_ptr<Enemy>> newWave;
+    
+    // Track generations
+    generation++;
+    
+    // Update mutation rate based on progress
+    updateMutationRate(previousWave);
+    
+    std::cout << "Generation " << generation << ", adaptive mutation rate: " << adaptiveMutationRate << std::endl;
 
-    // Select 4 parents
+    // Select 6 parents (increased from 4)
     std::vector<std::unique_ptr<Enemy>> parents = selectParents(previousWave);
     
     // If we don't have enough parents, return the previous wave
-    if (parents.size() < 4) {
+    if (parents.size() < 6) {
         std::cout << "Not enough parents to evolve population, returning previous wave" << std::endl;
         
         // Clone the previous wave
@@ -24,9 +32,10 @@ std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::evolvePopulation(const std
         return newWave;
     }
 
-    // Create 2 pairs of parents and perform crossover to get 4 children
+    // Create 3 pairs of parents and perform crossover to get 6 children
     std::vector<std::unique_ptr<Enemy>> offspring1 = crossover(parents[0], parents[1]);
     std::vector<std::unique_ptr<Enemy>> offspring2 = crossover(parents[2], parents[3]);
+    std::vector<std::unique_ptr<Enemy>> offspring3 = crossover(parents[4], parents[5]);
     
     // Combine all offspring
     std::vector<std::unique_ptr<Enemy>> allOffspring;
@@ -36,11 +45,147 @@ std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::evolvePopulation(const std
     for (auto& child : offspring2) {
         allOffspring.push_back(std::move(child));
     }
+    for (auto& child : offspring3) {
+        allOffspring.push_back(std::move(child));
+    }
 
-    // Create new generation with 4 parents and 4 children
+    // Create new generation with 6 parents and 6 children for a total of 12
     newWave = createNextGeneration(parents, allOffspring);
+    
+    // Apply immigration every few generations
+    if (generation % immigrationInterval == 0) {
+        // Extract path and textures from the first enemy
+        std::vector<std::pair<int, int>> path;
+        SDL_Texture* ogreTexture = nullptr;
+        SDL_Texture* darkElfTexture = nullptr;
+        SDL_Texture* harpyTexture = nullptr;
+        SDL_Texture* mercenaryTexture = nullptr;
+        
+        // Find reference textures
+        for (const auto& enemy : newWave) {
+            path = enemy->getPath();
+            if (dynamic_cast<Ogre*>(enemy.get())) {
+                ogreTexture = enemy->getTexture();
+            } else if (dynamic_cast<DarkElf*>(enemy.get())) {
+                darkElfTexture = enemy->getTexture();
+            } else if (dynamic_cast<Harpy*>(enemy.get())) {
+                harpyTexture = enemy->getTexture();
+            } else if (dynamic_cast<Mercenary*>(enemy.get())) {
+                mercenaryTexture = enemy->getTexture();
+            }
+        }
+        
+        // Create random immigrants if we have all textures
+        if (ogreTexture && darkElfTexture && harpyTexture && mercenaryTexture) {
+            int immigrantCount = static_cast<int>(newWave.size() * immigrationRate);
+            std::cout << "Introducing " << immigrantCount << " new random enemies for genetic diversity" << std::endl;
+            
+            // Create random enemies
+            auto immigrants = createRandomEnemies(immigrantCount, path, ogreTexture, darkElfTexture, harpyTexture, mercenaryTexture);
+            
+            // Remove weakest members from population
+            std::vector<size_t> indices(newWave.size());
+            std::iota(indices.begin(), indices.end(), 0);
+            std::sort(indices.begin(), indices.end(),
+                [&newWave](size_t i1, size_t i2) {
+                    return newWave[i1]->calculateFitness() < newWave[i2]->calculateFitness();
+                });
+            
+            // Remove weakest members (ones with lowest fitness)
+            std::vector<std::unique_ptr<Enemy>> tempWave;
+            for (size_t i = immigrantCount; i < newWave.size(); i++) {
+                tempWave.push_back(std::move(newWave[indices[i]]));
+            }
+            newWave = std::move(tempWave);
+            
+            // Add immigrants
+            for (auto& immigrant : immigrants) {
+                newWave.push_back(std::move(immigrant));
+            }
+        }
+    }
 
     return newWave;
+}
+
+void GeneticAlgorithm::updateMutationRate(const std::vector<std::unique_ptr<Enemy>>& population) {
+    // Find best fitness
+    float bestFitness = 0.0f;
+    for (const auto& enemy : population) {
+        float fitness = enemy->calculateFitness();
+        if (fitness > bestFitness) bestFitness = fitness;
+    }
+    
+    // First generation doesn't have a previous fitness to compare
+    if (generation == 1) {
+        previousBestFitness = bestFitness;
+        return;
+    }
+    
+    std::cout << "Best fitness: " << bestFitness << " (previous: " << previousBestFitness << ")" << std::endl;
+    
+    // Check for stagnation (less than 1% improvement)
+    if (bestFitness <= previousBestFitness * 1.01f) {
+        stagnantGenerations++;
+        std::cout << "Stagnant generation detected (" << stagnantGenerations << " in a row)" << std::endl;
+        
+        if (stagnantGenerations > 2) {
+            // Increase mutation rate to escape local optimum
+            adaptiveMutationRate = std::min(adaptiveMutationRate * 1.5f, 0.3f);
+            std::cout << "Increasing mutation rate to " << adaptiveMutationRate << " to escape local optimum" << std::endl;
+        }
+    } else {
+        // Reset stagnation counter and mutation rate when improving
+        stagnantGenerations = 0;
+        adaptiveMutationRate = baseMutationRate;
+        std::cout << "Progress detected, resetting mutation rate to base rate: " << baseMutationRate << std::endl;
+    }
+    
+    previousBestFitness = bestFitness;
+}
+
+std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::createRandomEnemies(int count, const std::vector<std::pair<int, int>>& path, SDL_Texture* ogreTexture, SDL_Texture* darkElfTexture, SDL_Texture* harpyTexture, SDL_Texture* mercenaryTexture) {
+    std::vector<std::unique_ptr<Enemy>> randomEnemies;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> typeDist(0, 3);
+    std::uniform_real_distribution<float> speedDist(1.0f, 4.0f);
+    std::uniform_int_distribution<> healthDist(80, 200);
+    std::uniform_real_distribution<float> resistanceDist(0.0f, 0.7f);
+    std::uniform_int_distribution<> goldDist(8, 20);
+    
+    for (int i = 0; i < count; i++) {
+        std::unique_ptr<Enemy> enemy;
+        int type = typeDist(gen);
+        
+        // Create a random enemy of a random type
+        switch (type) {
+            case 0:
+                enemy = std::make_unique<Ogre>(0, 0, path, ogreTexture);
+                break;
+            case 1:
+                enemy = std::make_unique<DarkElf>(0, 0, path, darkElfTexture);
+                break;
+            case 2:
+                enemy = std::make_unique<Harpy>(0, 0, path, harpyTexture);
+                break;
+            case 3:
+                enemy = std::make_unique<Mercenary>(0, 0, path, mercenaryTexture);
+                break;
+        }
+        
+        // Set random attributes
+        enemy->setHealth(healthDist(gen));
+        enemy->setSpeed(speedDist(gen));
+        enemy->setArrowResistance(resistanceDist(gen));
+        enemy->setMagicResistance(resistanceDist(gen));
+        enemy->setArtilleryResistance(resistanceDist(gen));
+        enemy->setGold(goldDist(gen));
+        
+        randomEnemies.push_back(std::move(enemy));
+    }
+    
+    return randomEnemies;
 }
 
 std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::selectParents(const std::vector<std::unique_ptr<Enemy>>& population) {
@@ -54,15 +199,27 @@ std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::selectParents(const std::v
             return population[i1]->calculateFitness() > population[i2]->calculateFitness();
         });
     
-    // Take the top 4 parents
+    // Take the top 6 parents (increased from 4)
     std::vector<std::unique_ptr<Enemy>> parents;
-    int numParents = std::min(4, static_cast<int>(indices.size()));
+    int numParents = std::min(6, static_cast<int>(indices.size()));
     
     for (int i = 0; i < numParents; ++i) {
         parents.push_back(std::unique_ptr<Enemy>(population[indices[i]]->clone()));
     }
     
     return parents;
+}
+
+void GeneticAlgorithm::mutate(std::unique_ptr<Enemy>& enemy, float mutationRate) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.0, 1.0);
+
+    // Apply mutation with adaptive rate
+    if (dis(gen) < adaptiveMutationRate) {
+        // Use more aggressive mutation
+        enemy->mutate(adaptiveMutationRate);
+    }
 }
 
 std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::crossover(const std::unique_ptr<Enemy>& parent1, const std::unique_ptr<Enemy>& parent2) {
@@ -161,32 +318,27 @@ std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::crossover(const std::uniqu
     return children;
 }
 
-void GeneticAlgorithm::mutate(std::unique_ptr<Enemy>& enemy, float mutationRate) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> dis(0.0, 1.0);
-
-    if (dis(gen) < mutationRate) {
-        enemy->mutate(0.01f);
-    }
-}
-
-
 std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::createNextGeneration(
     const std::vector<std::unique_ptr<Enemy>>& parents,
     const std::vector<std::unique_ptr<Enemy>>& offspring) {
     
     std::vector<std::unique_ptr<Enemy>> newGeneration;
+    // Reserve more space for increased population size (12)
     newGeneration.reserve(parents.size() + offspring.size());
     
     // Create copies of parents using clone()
     for (const auto& parent : parents) {
-        newGeneration.push_back(std::unique_ptr<Enemy>(parent->clone()));
+        // Apply mutation to parents as well
+        auto clone = std::unique_ptr<Enemy>(parent->clone());
+        mutate(clone, adaptiveMutationRate);
+        newGeneration.push_back(std::move(clone));
     }
     
-    // Create copies of offspring using clone()
+    // Create copies of offspring using clone() and apply mutation
     for (const auto& child : offspring) {
-        newGeneration.push_back(std::unique_ptr<Enemy>(child->clone()));
+        auto clone = std::unique_ptr<Enemy>(child->clone());
+        mutate(clone, adaptiveMutationRate * 1.5f); // Slightly higher mutation for offspring
+        newGeneration.push_back(std::move(clone));
     }
     
     return newGeneration;

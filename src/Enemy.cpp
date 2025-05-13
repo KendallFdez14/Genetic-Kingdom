@@ -131,28 +131,29 @@ void Enemy::mutate(float mutationRate) {
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dis(0.0f, 1.0f);
     
-    // Mutación de velocidad
+    // Mutation of speed - more aggressive changes
     if (dis(gen) < mutationRate) {
-        float speedChange = dis(gen) * 0.4f + 0.8f; // Factor entre 0.8 y 1.2
+        float speedChange = dis(gen) * 0.6f + 0.7f; // Factor between 0.7 and 1.3
         speed *= speedChange;
-        // Limitar velocidad a un rango razonable
-        speed = std::max(1.0f, std::min(5.0f, speed));
+        // Limit speed to a reasonable range, but allow higher values
+        speed = std::max(1.0f, std::min(6.0f, speed));
     }
     
-    // Mutación de salud
+    // Mutation of health - more aggressive changes
     if (dis(gen) < mutationRate) {
-        float healthChange = dis(gen) * 0.4f + 0.8f; // Factor entre 0.8 y 1.2
+        float healthChange = dis(gen) * 0.6f + 0.7f; // Factor between 0.7 and 1.3
         health = static_cast<int>(health * healthChange);
-        // Limitar salud a un rango razonable
-        health = std::max(50, std::min(300, health));
+        // Wider health range
+        health = std::max(50, std::min(400, health));
+        initialHealth = health; // Update initial health too
     }
     
-    // Mutación de resistencias
+    // Mutation of resistances - more significant changes
     auto mutateResistance = [&](float& resistance) {
         if (dis(gen) < mutationRate) {
-            float change = dis(gen) * 0.3f - 0.15f; // -0.15 a +0.15
+            float change = dis(gen) * 0.4f - 0.2f; // -0.2 to +0.2
             resistance += change;
-            resistance = std::max(0.0f, std::min(0.9f, resistance)); // Limitar entre 0 y 0.9
+            resistance = std::max(0.0f, std::min(0.9f, resistance)); // Limit between 0 and 0.9
         }
     };
     
@@ -160,16 +161,23 @@ void Enemy::mutate(float mutationRate) {
     mutateResistance(magicResistance);
     mutateResistance(artilleryResistance);
     
-    // Mutación de oro
+    // Mutation of gold - more significant changes
     if (dis(gen) < mutationRate) {
-        float goldChange = dis(gen) * 0.4f + 0.8f; // Factor entre 0.8 y 1.2
+        float goldChange = dis(gen) * 0.6f + 0.7f; // Factor between 0.7 and 1.3
         gold = static_cast<int>(gold * goldChange);
-        gold = std::max(5, gold); // Al menos 5 de oro
+        gold = std::max(5, std::min(30, gold)); // Allow higher gold values
     }
 
+    // Reset position and node
     x = 0;
     y = 0;
     currentNode = 0;
+    
+    // Reset fitness tracking
+    hitsTaken = 0;
+    timeTaken = 0;
+    distanceTraveled = 0;
+    pathLength = 0;
 }
 
 Enemy* Enemy::clone() const {

@@ -4,6 +4,7 @@
 #include <SDL2/SDL_image.h> // Include SDL_image for IMG_LoadTexture
 #include <SDL2/SDL_ttf.h> // Include SDL_ttf for TTF_RenderText_Blended
 #include <sstream>
+#include <iomanip> // For std::fixed and std::setprecision
 #include <numeric>
 #include "Tower.h"
 #include "Astar.h"
@@ -51,7 +52,7 @@ bool Game::init() {
         return false;
     }
 
-    window = SDL_CreateWindow("Tower Defense", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mapSize * 75 + 200, mapSize * 75, 0);
+    window = SDL_CreateWindow("Tower Defense", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mapSize * 75 + 500, mapSize * 75, 0);
     if (!window) {
         std::cerr << "SDL_CreateWindow error: " << SDL_GetError() << "\n";
         return false;
@@ -225,24 +226,171 @@ void Game::renderMap() {
 void Game::renderPannel() {
     //Background
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_Rect pannel = {mapSize * 75, 0, 200, mapSize * 75};
+    SDL_Rect pannel = {mapSize * 75, 0, 500, mapSize * 75};
     SDL_RenderFillRect(renderer, &pannel);
 
     //padding (10)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_Rect pannelRect = {mapSize * 75 + 10, 10, 180, mapSize * 75};
+    SDL_Rect pannelRect = {mapSize * 75 + 10, 10, 480, mapSize * 75 - 20};
     SDL_RenderDrawRect(renderer, &pannelRect);
 
-    //Gold Text
+    int yOffset = 10;
+    // Render text
     SDL_Color color = {0, 0, 0};
+    
+    // Gold Text
     std::stringstream ss;
     ss << "Gold: " << gold;
     SDL_Surface* textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    SDL_Rect textRect = {mapSize * 75 + 10, 10, textSurface->w, textSurface->h};
+    SDL_Rect textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
     SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
+    
+    yOffset += 30;
+    
+    // Wave Text
+    ss.str("");
+    ss << "Wave: " << waveManager.getCurrentWaveNumber();
+    textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+    
+    yOffset += 30;
+    
+    // Get fitness stats
+    const FitnessStats& stats = waveManager.getLastWaveFitness();
+    
+    // Only show evolution details if we have at least one generation
+    if (stats.generation > 0) {
+        // Title for evolutionary stats
+        ss.str("");
+        ss << "Evolution Stats:";
+        textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+        SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+        SDL_FreeSurface(textSurface);
+        SDL_DestroyTexture(textTexture);
+        
+        yOffset += 25;
+        
+        // Generation
+        ss.str("");
+        ss << "Generation: " << stats.generation;
+        textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+        SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+        SDL_FreeSurface(textSurface);
+        SDL_DestroyTexture(textTexture);
+        
+        yOffset += 25;
+        
+        // Mutation Rate
+        ss.str("");
+        ss << "Mutation: " << std::fixed << std::setprecision(1) << (stats.mutationRate * 100) << "%";
+        textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+        SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+        SDL_FreeSurface(textSurface);
+        SDL_DestroyTexture(textTexture);
+        
+        yOffset += 25;
+        
+        // Average Fitness
+        ss.str("");
+        ss << "Avg Fitness: " << std::fixed << std::setprecision(1) << stats.averageFitness;
+        textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+        SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+        SDL_FreeSurface(textSurface);
+        SDL_DestroyTexture(textTexture);
+        
+        yOffset += 25;
+        
+        // Best Fitness
+        ss.str("");
+        ss << "Best Fitness: " << std::fixed << std::setprecision(1) << stats.maxFitness;
+        textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+        textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+        textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+        SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+        SDL_FreeSurface(textSurface);
+        SDL_DestroyTexture(textTexture);
+    }
+    
+    // Tower selection section
+    yOffset += 40;
+    
+    ss.str("");
+    ss << "Towers:";
+    textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+    
+    yOffset += 25;
+    
+    // Tower types and costs
+    ss.str("");
+    ss << "1: Archer (" << Tower::getCost(TowerType::Archer) << " gold)";
+    textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+    
+    yOffset += 25;
+    
+    ss.str("");
+    ss << "2: Mage (" << Tower::getCost(TowerType::Mage) << " gold)";
+    textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+    
+    yOffset += 25;
+    
+    ss.str("");
+    ss << "3: Artillery (" << Tower::getCost(TowerType::Artillery) << " gold)";
+    textSurface = TTF_RenderText_Blended(font, ss.str().c_str(), color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    textRect = {mapSize * 75 + 15, yOffset, textSurface->w, textSurface->h};
+    SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+    
+    // Highlight selected tower type
+    SDL_SetRenderDrawColor(renderer, 255, 255, 0, 128);
+    int selectedY = 0;
+    switch (selectedTowerType) {
+        case TowerType::Archer:
+            selectedY = yOffset - 50;
+            break;
+        case TowerType::Mage:
+            selectedY = yOffset - 25;
+            break;
+        case TowerType::Artillery:
+            selectedY = yOffset;
+            break;
+    }
+    
+    SDL_Rect highlightRect = {mapSize * 75 + 12, selectedY, 176, 25};
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_RenderFillRect(renderer, &highlightRect);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
 
 void Game::clean() {
