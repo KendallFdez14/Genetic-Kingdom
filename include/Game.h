@@ -24,6 +24,7 @@ private:
     std::vector<std::pair<int, int>> path; // Lista de nodos del camino
     int enemyTimer;
     int waveTimer;
+    float timeScale; // Time scale factor for debugging
 
     std::vector<Tower> towers;
     std::vector<std::unique_ptr<Enemy>> enemies; // Cambiado a punteros inteligentes
@@ -34,7 +35,6 @@ private:
     void handleEvents();
     void update();
     void render();
-    void spawnEnemy();
 
     void renderMap();
     void renderPannel();

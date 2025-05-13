@@ -39,7 +39,9 @@ void WaveManager::update() {
     // If we've spawned all enemies and there are no more ready enemies, mark wave as complete
     if (currentWave.empty() && readyEnemies.empty()) {
         waveActive = false;
-        //std::cout << "Wave " << currentWaveNumber << " complete" << std::endl;
+        std::cout << "Wave " << currentWaveNumber << " complete" << std::endl;
+
+        
     }
 }
 
@@ -63,13 +65,13 @@ void WaveManager::startNewWave() {
 }
 
 std::vector<std::unique_ptr<Enemy>> WaveManager::generateInitialWave() {
-    //2 enemigos por tipo
+    // Create 2 enemies of each type, for a total of 8 enemies
     std::vector<std::unique_ptr<Enemy>> initialWave;
     for (int i = 0; i < 2; i++) {
-        initialWave.push_back(std::make_unique<Ogre>(path[0].first, path[0].second, path, ogreTexture));
-        initialWave.push_back(std::make_unique<DarkElf>(path[0].first, path[0].second, path, darkElfTexture));
-        initialWave.push_back(std::make_unique<Harpy>(path[0].first, path[0].second, path, harpyTexture));
-        initialWave.push_back(std::make_unique<Mercenary>(path[0].first, path[0].second, path, mercenaryTexture));
+        initialWave.push_back(std::make_unique<Ogre>(0, 0, path, ogreTexture));
+        initialWave.push_back(std::make_unique<DarkElf>(0, 0, path, darkElfTexture));
+        initialWave.push_back(std::make_unique<Harpy>(0, 0, path, harpyTexture));
+        initialWave.push_back(std::make_unique<Mercenary>(0, 0, path, mercenaryTexture));
     }
     return initialWave;
 }
@@ -86,20 +88,9 @@ void WaveManager::saveSurvivors(const std::vector<std::unique_ptr<Enemy>>& survi
         if (enemy && !enemy->isDead()) {
             try {
                 // Crear una copia del enemigo
-                // Determinar qué tipo de enemigo es
-                if (dynamic_cast<Ogre*>(enemy.get())) {
-                    this->survivors.push_back(std::make_unique<Ogre>(
-                        path[0].first, path[0].second, path, ogreTexture));
-                } else if (dynamic_cast<DarkElf*>(enemy.get())) {
-                    this->survivors.push_back(std::make_unique<DarkElf>(
-                        path[0].first, path[0].second, path, darkElfTexture));
-                } else if (dynamic_cast<Harpy*>(enemy.get())) {
-                    this->survivors.push_back(std::make_unique<Harpy>(
-                        path[0].first, path[0].second, path, harpyTexture));
-                } else if (dynamic_cast<Mercenary*>(enemy.get())) {
-                    this->survivors.push_back(std::make_unique<Mercenary>(
-                        path[0].first, path[0].second, path, mercenaryTexture));
-                }
+                Enemy* enemyCopy = enemy->clone();
+                
+                this->survivors.push_back(std::unique_ptr<Enemy>(enemyCopy));
             } catch (const std::exception& e) {
                 std::cerr << "Error saving survivor: " << e.what() << std::endl;
             }
@@ -112,10 +103,10 @@ void WaveManager::saveSurvivors(const std::vector<std::unique_ptr<Enemy>>& survi
     if (this->survivors.empty()) {
         std::cout << "No survivors, creating default enemies for next wave" << std::endl;
         // Add at least one of each type to ensure we have some enemies
-        this->survivors.push_back(std::make_unique<Ogre>(path[0].first, path[0].second, path, ogreTexture));
-        this->survivors.push_back(std::make_unique<DarkElf>(path[0].first, path[0].second, path, darkElfTexture));
-        this->survivors.push_back(std::make_unique<Harpy>(path[0].first, path[0].second, path, harpyTexture));
-        this->survivors.push_back(std::make_unique<Mercenary>(path[0].first, path[0].second, path, mercenaryTexture));
+        this->survivors.push_back(std::make_unique<Ogre>(0, 0, path, ogreTexture));
+        this->survivors.push_back(std::make_unique<DarkElf>(0, 0, path, darkElfTexture));
+        this->survivors.push_back(std::make_unique<Harpy>(0, 0, path, harpyTexture));
+        this->survivors.push_back(std::make_unique<Mercenary>(0, 0, path, mercenaryTexture));
     }
 }
 
@@ -157,13 +148,41 @@ void WaveManager::prepareNextWave() {
     std::cout << "Preparing next wave with " << processedEnemies.size() << " processed enemies" << std::endl;
     
     // If we don't have enough processed enemies, create default ones
-    if (processedEnemies.size() < 4) {
-        std::cout << "Not enough processed enemies, adding default ones" << std::endl;
-        // Add at least one of each type to ensure we have some enemies
-        processedEnemies.push_back(std::make_unique<Ogre>(path[0].first, path[0].second, path, ogreTexture));
-        processedEnemies.push_back(std::make_unique<DarkElf>(path[0].first, path[0].second, path, darkElfTexture));
-        processedEnemies.push_back(std::make_unique<Harpy>(path[0].first, path[0].second, path, harpyTexture));
-        processedEnemies.push_back(std::make_unique<Mercenary>(path[0].first, path[0].second, path, mercenaryTexture));
+    // We need at least 8 enemies total (4 parents to generate 4 children)
+    if (processedEnemies.size() < 8) {
+        std::cout << "Not enough processed enemies, adding default ones to reach 8" << std::endl;
+        
+        // Calculate how many more enemies we need
+        int neededEnemies = 8 - processedEnemies.size();
+        
+        // Add enemies of each type in a balanced way
+        int eachTypeCount = neededEnemies / 4;
+        int remainder = neededEnemies % 4;
+        
+        for (int i = 0; i < eachTypeCount; i++) {
+            processedEnemies.push_back(std::make_unique<Ogre>(0, 0, path, ogreTexture));
+            processedEnemies.push_back(std::make_unique<DarkElf>(0, 0, path, darkElfTexture));
+            processedEnemies.push_back(std::make_unique<Harpy>(0, 0, path, harpyTexture));
+            processedEnemies.push_back(std::make_unique<Mercenary>(0, 0, path, mercenaryTexture));
+        }
+        
+        // Add any remainder enemies
+        for (int i = 0; i < remainder; i++) {
+            switch (i % 4) {
+                case 0:
+                    processedEnemies.push_back(std::make_unique<Ogre>(0, 0, path, ogreTexture));
+                    break;
+                case 1:
+                    processedEnemies.push_back(std::make_unique<DarkElf>(0, 0, path, darkElfTexture));
+                    break;
+                case 2:
+                    processedEnemies.push_back(std::make_unique<Harpy>(0, 0, path, harpyTexture));
+                    break;
+                case 3:
+                    processedEnemies.push_back(std::make_unique<Mercenary>(0, 0, path, mercenaryTexture));
+                    break;
+            }
+        }
     }
     
     // Save processed enemies as survivors for the genetic algorithm
@@ -171,4 +190,56 @@ void WaveManager::prepareNextWave() {
     processedEnemies.clear();
     
     std::cout << "Next wave will evolve from " << survivors.size() << " enemies" << std::endl;
+}
+
+std::pair<std::vector<std::unique_ptr<Enemy>>, int> WaveManager::processActiveEnemies(std::vector<std::unique_ptr<Enemy>>& activeEnemies) {
+    // Vector to store enemies that died or reached the end this frame
+    std::vector<std::unique_ptr<Enemy>> processedThisFrame;
+    int goldEarned = 0;
+    
+    // Update and process enemies
+    for (auto it = activeEnemies.begin(); it != activeEnemies.end();) {
+        if (!(*it)) {  // Check for null pointer
+            it = activeEnemies.erase(it);
+        } else if ((*it)->isDead() || (*it)->hasReachedEnd()) {
+            // Enemy died or reached end, save it for genetic algorithm
+            if (*it) {
+                // Add gold if enemy died
+                if ((*it)->isDead()) {
+                    goldEarned += (*it)->getGold();
+                }
+                
+                // Move to processed enemies list for genetic algorithm
+                processedThisFrame.push_back(std::move(*it));
+            }
+            it = activeEnemies.erase(it);
+        } else {
+            (*it)->update();
+            ++it;
+        }
+    }
+    
+    // Add processed enemies to the WaveManager's list
+    if (!processedThisFrame.empty()) {
+        addProcessedEnemies(std::move(processedThisFrame));
+    }
+    
+    // Return a copy of processed enemies and gold earned
+    return {std::move(processedThisFrame), goldEarned};
+}
+
+bool WaveManager::checkAndHandleWaveTransition(bool noEnemiesLeft) {
+    bool transitionOccurred = false;
+    
+    // If wave just ended and all enemies are gone, save any remaining enemies
+    if ((wasWaveActive && !waveActive) || (!waveActive && noEnemiesLeft)) {
+        // Trigger new wave planning if appropriate
+        prepareNextWave();
+        transitionOccurred = true;
+    }
+    
+    // Update previous wave state
+    wasWaveActive = waveActive;
+    
+    return transitionOccurred;
 }

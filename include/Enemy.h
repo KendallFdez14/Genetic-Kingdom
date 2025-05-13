@@ -9,6 +9,7 @@ class Enemy {
 protected:
     int x, y;
     int health;
+    int initialHealth; // Store initial health for fitness calculation
     float speed;
     float arrowResistance;
     float magicResistance;
@@ -39,6 +40,7 @@ public:
     int getX() const;
     int getY() const;
     int getHealth() const { return health; }
+    int getInitialHealth() const { return initialHealth; } // Get initial health
     float getSpeed() const { return speed; }
     int getDamage() const { return 1; }
     int getGold() const;
@@ -58,12 +60,12 @@ public:
     bool hasReachedEnd() const { return currentNode >= path.size() - 1; }
     
     // Genetic algorithm methods
-    virtual Enemy* clone() const = 0;
-    virtual void mutate(float mutationRate);
+    Enemy* clone() const;
+    void mutate(float mutationRate);
     float calculateFitness() const;
     
     // Setters for genetic algorithm
-    void setHealth(int h) { health = h; }
+    void setHealth(int h) { health = h; initialHealth = h; } // Update both values
     void setSpeed(float s) { speed = s; }
     void setArrowResistance(float r) { arrowResistance = r; }
     void setMagicResistance(float r) { magicResistance = r; }
@@ -80,27 +82,19 @@ public:
 class Ogre : public Enemy {
 public:
     Ogre(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
-    Enemy* clone() const override;
-    void mutate(float mutationRate) override { Enemy::mutate(mutationRate); }
 };
 
 class DarkElf : public Enemy {
 public:
     DarkElf(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
-    Enemy* clone() const override;
-    void mutate(float mutationRate) override { Enemy::mutate(mutationRate); }
 };
 
 class Harpy : public Enemy {
 public:
     Harpy(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
-    Enemy* clone() const override;
-    void mutate(float mutationRate) override { Enemy::mutate(mutationRate); }
 };
 
 class Mercenary : public Enemy {
 public:
     Mercenary(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture);
-    Enemy* clone() const override;
-    void mutate(float mutationRate) override { Enemy::mutate(mutationRate); }
 }; 

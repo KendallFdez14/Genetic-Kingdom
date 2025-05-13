@@ -22,6 +22,7 @@ private:
     int spawnTimer = 0;
     int waveTimer = 0;
     GeneticAlgorithm geneticAlgorithm;
+    bool wasWaveActive = true; // Track previous wave state
 
 public:
     WaveManager(const std::vector<std::pair<int, int>>& path, SDL_Texture* ogreTexture, SDL_Texture* darkElfTexture, SDL_Texture* harpyTexture, SDL_Texture* mercenaryTexture);
@@ -37,4 +38,11 @@ public:
     // New methods for genetic algorithm
     void addProcessedEnemies(std::vector<std::unique_ptr<Enemy>> deadEnemies);
     void prepareNextWave();
+    
+    // New method to process active enemies and return any killed enemies and gold earned
+    // This centralizes enemy processing logic in the WaveManager
+    std::pair<std::vector<std::unique_ptr<Enemy>>, int> processActiveEnemies(std::vector<std::unique_ptr<Enemy>>& activeEnemies);
+    
+    // New method to check if a wave transition has occurred and handle it
+    bool checkAndHandleWaveTransition(bool noEnemiesLeft);
 }; 

@@ -10,14 +10,35 @@ GeneticAlgorithm::GeneticAlgorithm() {}
 std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::evolvePopulation(const std::vector<std::unique_ptr<Enemy>>& previousWave) {
     std::vector<std::unique_ptr<Enemy>> newWave;
 
-    // Seleccionar padres
+    // Select 4 parents
     std::vector<std::unique_ptr<Enemy>> parents = selectParents(previousWave);
+    
+    // If we don't have enough parents, return the previous wave
+    if (parents.size() < 4) {
+        std::cout << "Not enough parents to evolve population, returning previous wave" << std::endl;
+        
+        // Clone the previous wave
+        for (const auto& enemy : previousWave) {
+            newWave.push_back(std::unique_ptr<Enemy>(enemy->clone()));
+        }
+        return newWave;
+    }
 
-    // Cruce y mutación
-    std::vector<std::unique_ptr<Enemy>> offspring = crossover(parents[0], parents[1]);
+    // Create 2 pairs of parents and perform crossover to get 4 children
+    std::vector<std::unique_ptr<Enemy>> offspring1 = crossover(parents[0], parents[1]);
+    std::vector<std::unique_ptr<Enemy>> offspring2 = crossover(parents[2], parents[3]);
+    
+    // Combine all offspring
+    std::vector<std::unique_ptr<Enemy>> allOffspring;
+    for (auto& child : offspring1) {
+        allOffspring.push_back(std::move(child));
+    }
+    for (auto& child : offspring2) {
+        allOffspring.push_back(std::move(child));
+    }
 
-    // Crear nueva generación
-    newWave = createNextGeneration(parents, offspring);
+    // Create new generation with 4 parents and 4 children
+    newWave = createNextGeneration(parents, allOffspring);
 
     return newWave;
 }
@@ -33,12 +54,12 @@ std::vector<std::unique_ptr<Enemy>> GeneticAlgorithm::selectParents(const std::v
             return population[i1]->calculateFitness() > population[i2]->calculateFitness();
         });
     
-    // Take the top 2 parents
+    // Take the top 4 parents
     std::vector<std::unique_ptr<Enemy>> parents;
-    if (indices.size() >= 2) {
-        // Use clone() instead of trying to instantiate Enemy directly
-        parents.push_back(std::unique_ptr<Enemy>(population[indices[0]]->clone()));
-        parents.push_back(std::unique_ptr<Enemy>(population[indices[1]]->clone()));
+    int numParents = std::min(4, static_cast<int>(indices.size()));
+    
+    for (int i = 0; i < numParents; ++i) {
+        parents.push_back(std::unique_ptr<Enemy>(population[indices[i]]->clone()));
     }
     
     return parents;

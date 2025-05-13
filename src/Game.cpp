@@ -161,47 +161,16 @@ void Game::update() {
         }
     }
     
-    // If all enemies are gone and wave is inactive, prepare for next wave
+    // Process all active enemies using WaveManager
+    // This will handle updates, deaths, and enemies that reached the end
+    auto [processedEnemies, goldEarned] = waveManager.processActiveEnemies(enemies);
+    
+    // Add any gold earned to the player's total
+    gold += goldEarned;
+    
+    // Check if a wave transition has occurred and handle it
     bool noEnemiesLeft = enemies.empty();
-    
-    // Create a vector to store enemies that died this frame
-    std::vector<std::unique_ptr<Enemy>> deadEnemies;
-    
-    // Update enemies
-    for (auto it = enemies.begin(); it != enemies.end();) {
-        if (!(*it)) {  // Check for null pointer
-            it = enemies.erase(it);
-        } else if ((*it)->isDead() || (*it)->hasReachedEnd()) {
-            // Enemy died or reached end, save it for genetic algorithm
-            if (*it) {
-                // Add gold if enemy died
-                if ((*it)->isDead()) {
-                    gold += (*it)->getGold();
-                }
-                
-                // Move to dead enemies list for genetic algorithm
-                deadEnemies.push_back(std::move(*it));
-            }
-            it = enemies.erase(it);
-        } else {
-            (*it)->update();
-            ++it;
-        }
-    }
-    
-    // If we have dead enemies this frame, add them to the wave manager
-    if (!deadEnemies.empty()) {
-        waveManager.addProcessedEnemies(std::move(deadEnemies));
-    }
-    
-    // If wave just ended and all enemies are gone, save any remaining enemies
-    static bool wasWaveActive = true;
-    if ((wasWaveActive && !waveManager.isWaveActive()) || 
-        (!waveManager.isWaveActive() && noEnemiesLeft)) {
-        // Trigger new wave planning if appropriate
-        waveManager.prepareNextWave();
-    }
-    wasWaveActive = waveManager.isWaveActive();
+    waveManager.checkAndHandleWaveTransition(noEnemiesLeft);
     
     // Update towers
     for (auto& tower : towers) {
@@ -252,27 +221,6 @@ void Game::renderMap() {
     }
 }
 
-void Game::spawnEnemy() {
-    // Alternar entre diferentes tipos de enemigos
-    static int enemyType = 0;
-
-    switch (enemyType) {
-        case 0:
-            enemies.emplace_back(std::make_unique<Ogre>(0, 0, path, ogreTexture));
-            break;
-        case 1:
-            enemies.emplace_back(std::make_unique<DarkElf>(0, 0, path, darkElfTexture));
-            break;
-        case 2:
-            enemies.emplace_back(std::make_unique<Harpy>(0, 0, path, harpyTexture));
-            break;
-        case 3:
-            enemies.emplace_back(std::make_unique<Mercenary>(0, 0, path, mercenaryTexture));
-            break;
-    }
-
-    enemyType = (enemyType + 1) % 4; // Alternar entre los tipos de enemigos
-}
 
 void Game::renderPannel() {
     //Background

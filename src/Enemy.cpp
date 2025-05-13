@@ -5,11 +5,14 @@
 
 // Clase base
 Enemy::Enemy(int x, int y, const std::vector<std::pair<int, int>>& path, int health, float speed, float arrowRes, float magicRes, float artilleryRes, SDL_Texture* texture, int gold)
-    : x(x), y(y), path(path), health(health), speed(speed), arrowResistance(arrowRes), magicResistance(magicRes), artilleryResistance(artilleryRes), texture(texture), gold(gold) {}
+    : x(x), y(y), path(path), health(health), initialHealth(health), speed(speed), arrowResistance(arrowRes), magicResistance(magicRes), artilleryResistance(artilleryRes), texture(texture), gold(gold) {}
 
 void Enemy::update() {
     if (currentNode >= path.size()) return; // Si ya llegó al final del camino
 
+    // Track time even when not moving
+    timeTaken += 1.0f; // Assuming update is called once per frame at fixed interval
+    
     int targetX = path[currentNode].first * 75 + 37; // Centro de la celda
     int targetY = path[currentNode].second * 75 + 37;
 
@@ -18,11 +21,24 @@ void Enemy::update() {
     float dist = std::sqrt(dx * dx + dy * dy);
 
     if (dist <= speed) {
+        // Track distance traveled when reaching a node
+        distanceTraveled += dist;
+        
         // Si llegó al nodo actual, pasa al siguiente
         x = targetX;
         y = targetY;
         currentNode++;
+        
+        // Update path length when moving to a new node
+        if (currentNode == 1) {
+            // Initialize path length based on total number of nodes
+            pathLength = path.size();
+        }
     } else {
+        // Track distance traveled during movement
+        float moveDist = speed;
+        distanceTraveled += moveDist;
+        
         // Movimiento hacia el nodo actual
         x += (dx / dist) * speed;
         y += (dy / dist) * speed;
@@ -35,12 +51,21 @@ void Enemy::render(SDL_Renderer* renderer) {
 }
 
 void Enemy::takeDamage(int dmg, const std::string& type) {
+    int actualDamage = 0;
+    
     if (type == "arrow") {
-        health -= static_cast<int>(dmg * (1.0f - arrowResistance));
+        actualDamage = static_cast<int>(dmg * (1.0f - arrowResistance));
     } else if (type == "magic") {
-        health -= static_cast<int>(dmg * (1.0f - magicResistance));
+        actualDamage = static_cast<int>(dmg * (1.0f - magicResistance));
     } else if (type == "artillery") {
-        health -= static_cast<int>(dmg * (1.0f - artilleryResistance));
+        actualDamage = static_cast<int>(dmg * (1.0f - artilleryResistance));
+    }
+    
+    health -= actualDamage;
+    
+    // If any damage was taken, increment hitsTaken counter
+    if (actualDamage > 0) {
+        hitsTaken++;
     }
 }
 
@@ -55,10 +80,49 @@ std::vector<std::pair<int, int>> Enemy::getPath() const { return path; }
 SDL_Texture* Enemy::getTexture() const { return texture; }
 
 float Enemy::calculateFitness() const {
-    float resistance = hitsTaken / pathLength;
-    float time = timeTaken / pathLength;
-    float distance = distanceTraveled / pathLength;
-    return resistance * time * distance;
+    // Base survival score - reaching the end is the primary goal
+    float survivalScore = hasReachedEnd() ? 10.0f : (distanceTraveled / pathLength);
+    
+    // Damage absorption capacity - normalized between 0 and 1
+    // Original health vs damage taken
+    float healthRatio = health > 0 ? static_cast<float>(health) / initialHealth : 0.0f;
+    
+    // Time efficiency - faster enemies get higher scores
+    // This is inverted since lower time is better
+    float timeEfficiency = pathLength > 0 ? 1.0f / (timeTaken / pathLength + 0.1f) : 0.0f;
+    
+    // Resource efficiency - better enemies cost more gold
+    // We want enemies that are worth their cost
+    float goldEfficiency = static_cast<float>(gold) / 50.0f; // Normalize by max gold value
+    
+    // Resistance factors - weight resistances based on tower frequency in game
+    float resistanceScore = (arrowResistance * 0.4f + 
+                           magicResistance * 0.3f + 
+                           artilleryResistance * 0.3f);
+    
+    // Type-specific bonus to encourage diversity
+    float typeBonus = 1.0f;
+    if (dynamic_cast<const Ogre*>(this)) typeBonus = 1.1f;  // Slightly favor ogres
+    else if (dynamic_cast<const DarkElf*>(this)) typeBonus = 1.05f;
+    else if (dynamic_cast<const Harpy*>(this)) typeBonus = 1.15f;  // Favor harpies more
+    else if (dynamic_cast<const Mercenary*>(this)) typeBonus = 1.0f;
+    
+    // Combined fitness score with appropriate weights
+    float fitness = (survivalScore * 3.0f) +      // Survival is most important
+                   (healthRatio * 1.5f) +         // Health remaining
+                   (timeEfficiency * 2.0f) +      // Speed is very important
+                   (goldEfficiency * 1.0f) +      // Gold value matters
+                   (resistanceScore * 2.0f);      // Resistances are important
+    
+    // Apply type bonus
+    fitness *= typeBonus;
+    
+    // Apply damage absorption bonus - enemies that absorbed lots of damage without dying
+    if (!isDead() && hitsTaken > 0) {
+        fitness *= (1.0f + (hitsTaken / 20.0f)); // Bonus for absorbing hits
+    }
+    
+    return fitness;
 }
 
 // Implementación de la mutación
@@ -102,6 +166,14 @@ void Enemy::mutate(float mutationRate) {
         gold = static_cast<int>(gold * goldChange);
         gold = std::max(5, gold); // Al menos 5 de oro
     }
+
+    x = 0;
+    y = 0;
+    currentNode = 0;
+}
+
+Enemy* Enemy::clone() const {
+    return new Enemy(0, 0, path, health, speed, arrowResistance, magicResistance, artilleryResistance, texture, gold);
 }
 
 // Implementación del cruce
@@ -130,26 +202,7 @@ Enemy* Enemy::crossover(const Enemy* parent1, const Enemy* parent2,
     // Determine which type of enemy to create based on the first parent
     Enemy* child = nullptr;
     
-    if (dynamic_cast<const Ogre*>(parent1)) {
-        child = new Ogre(0, 0, path, texture);
-    } else if (dynamic_cast<const DarkElf*>(parent1)) {
-        child = new DarkElf(0, 0, path, texture);
-    } else if (dynamic_cast<const Harpy*>(parent1)) {
-        child = new Harpy(0, 0, path, texture);
-    } else if (dynamic_cast<const Mercenary*>(parent1)) {
-        child = new Mercenary(0, 0, path, texture);
-    } else {
-        // Default to Ogre if type cannot be determined
-        child = new Ogre(0, 0, path, texture);
-    }
-    
-    // Apply the new attributes
-    child->setHealth(newHealth);
-    child->setSpeed(newSpeed);
-    child->setArrowResistance(newArrowRes);
-    child->setMagicResistance(newMagicRes);
-    child->setArtilleryResistance(newArtilleryRes);
-    child->setGold(newGold);
+    child = new Enemy(0, 0, path, newHealth, newSpeed, newArrowRes, newMagicRes, newArtilleryRes, texture, newGold);
     
     return child;
 }
@@ -158,30 +211,18 @@ Enemy* Enemy::crossover(const Enemy* parent1, const Enemy* parent2,
 Ogre::Ogre(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture)
     : Enemy(x, y, path, 150, 1.5f, 0.5f, 0.2f, 0.2f, texture, 15) {}
 
-Enemy* Ogre::clone() const {
-    return new Ogre(x, y, path, texture);
-}
 
 // Elfo Oscuro
 DarkElf::DarkElf(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture)
     : Enemy(x, y, path, 100, 3.5f, 0.2f, 0.5f, 0.2f, texture, 10) {}
 
-Enemy* DarkElf::clone() const {
-    return new DarkElf(x, y, path, texture);
-}
 
 // Harpía
 Harpy::Harpy(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture)
     : Enemy(x, y, path, 120, 2.5f, 0.3f, 0.3f, 1.0f, texture, 12) {}
 
-Enemy* Harpy::clone() const {
-    return new Harpy(x, y, path, texture);
-}
 
 // Mercenario
 Mercenary::Mercenary(int x, int y, const std::vector<std::pair<int, int>>& path, SDL_Texture* texture)
     : Enemy(x, y, path, 110, 2.0f, 0.4f, 0.1f, 0.4f, texture, 11) {}
 
-Enemy* Mercenary::clone() const {
-    return new Mercenary(x, y, path, texture);
-}
