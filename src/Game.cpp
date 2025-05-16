@@ -17,29 +17,27 @@ SDL_Texture* mercenaryTexture = nullptr;
 TTF_Font* font = nullptr;
 
 Game::Game() : window(nullptr), renderer(nullptr), running(false), enemyTimer(0), gold(50), selectedTowerType(TowerType::Archer), waveManager(std::vector<std::pair<int, int>>(), nullptr, nullptr, nullptr, nullptr) {
-    // Inicializar el mapa 16x16 con un camino
+    // Mapa 14x14 
     map = {
-        {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
-        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0},
-        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0}
+        {1,1,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,0,0,0,0,0,0,0,0,0,0,0,1,0},
+        {0,1,1,1,1,1,1,1,1,1,1,1,1,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0},
+        {0,1,0,0,0,0,0,0,0,0,0,0,0,0}
     };
     mapSize = map.size();
 
     // Definir el camino como una lista de nodos
-    path = aStarSearch(map, {0, 0}, {15, 14}); // Llamar a la función A* para obtener el camino
+    path = aStarSearch(map, {0, 0}, {13, 1}); // Llamar a la función A* para obtener el camino
 }
 
 Game::~Game() {
@@ -238,13 +236,13 @@ void Game::render() {
 }
 
 void Game::renderMap() {
-    int cellSize = 75; // Tamaño de cada celda (800px / 8 = 100px por celda)
+    int cellSize = 75; // Tamaño de cada celda
     for (int row = 0; row < mapSize; ++row) {
-        for (int col = 0; col < mapSize; ++col) {
+        for (int col = 0; col < map[row].size(); ++col) {
             if (map[row][col] == 1) {
-                SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255); // Color del camino
+                SDL_SetRenderDrawColor(renderer, 0, 100, 0, 255); // Verde oscuro para el camino
             } else {
-                SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255); // Color del espacio vacío
+                SDL_SetRenderDrawColor(renderer, 144, 238, 144, 255); // Verde claro para el resto
             }
             SDL_Rect cell = {col * cellSize, row * cellSize, cellSize, cellSize};
             SDL_RenderFillRect(renderer, &cell);
@@ -303,31 +301,25 @@ void Game::renderPannel() {
     };
 
     // =========== GAME INFO SECTION ===========
-    // Always show game info (essential information)
     std::stringstream ss;
-    
-    // Section title
     ss.str("");
     ss << "Game Info:";
     renderText(ss.str(), yOffset, color, true);
     
-    // Gold Text
     ss.str("");
     ss << "Gold: " << gold;
     renderText(ss.str(), yOffset);
     
-    // Wave Text
     ss.str("");
     ss << "Wave: " << waveManager.getCurrentWaveNumber();
     renderText(ss.str(), yOffset);
     
-    // Enemy counts
     ss.str("");
     ss << "Enemies Defeated: " << enemiesDefeated;
     renderText(ss.str(), yOffset);
     
     yOffset += SECTION_SPACING / 2; // Half spacing between sections
-    
+        
     // =========== EVOLUTION STATS SECTION ===========
     // Get fitness stats
     const FitnessStats& stats = waveManager.getLastWaveFitness();
@@ -367,40 +359,33 @@ void Game::renderPannel() {
         
         yOffset += SECTION_SPACING / 2; // Half spacing between sections
     }
-    
+
     // =========== AVAILABLE TOWERS SECTION ===========
-    // Estimate towers section height to see if it will fit
-    int towersSectionHeight = 140; // Approximate height based on content
+    ss.str("");
+    ss << "Build Towers:";
+    renderText(ss.str(), yOffset, color, true);
     
-    // Only show if there's still space
-    if (canFitSection(towersSectionHeight)) {
-        // Section title
-        ss.str("");
-        ss << "Build Towers:";
-        renderText(ss.str(), yOffset, color, true);
-        
-        // Archer tower
-        ss.str("");
-        ss << "1: Archer (" << Tower::getCost(TowerType::Archer) << " gold)";
-        SDL_Color archerColor = (selectedTowerType == TowerType::Archer) ? SDL_Color{0, 128, 0} : color;
-        renderText(ss.str(), yOffset, archerColor);
-        
-        // Mage tower
-        ss.str("");
-        ss << "2: Mage (" << Tower::getCost(TowerType::Mage) << " gold)";
-        SDL_Color mageColor = (selectedTowerType == TowerType::Mage) ? SDL_Color{0, 0, 128} : color;
-        renderText(ss.str(), yOffset, mageColor);
-        
-        // Artillery tower
-        ss.str("");
-        ss << "3: Artillery (" << Tower::getCost(TowerType::Artillery) << " gold)";
-        SDL_Color artilleryColor = (selectedTowerType == TowerType::Artillery) ? SDL_Color{128, 64, 0} : color;
-        renderText(ss.str(), yOffset, artilleryColor);
-        
-        yOffset += SECTION_SPACING / 2; // Half spacing between sections
-    }
+    // Archer tower
+    ss.str("");
+    ss << "1: Archer (" << Tower::getCost(TowerType::Archer) << " gold)";
+    SDL_Color archerColor = (selectedTowerType == TowerType::Archer) ? SDL_Color{128, 128, 128} : color; // Gris
+    renderText(ss.str(), yOffset, archerColor);
     
-    // =========== TOWER INFO SECTION ===========
+    // Mage tower
+    ss.str("");
+    ss << "2: Mage (" << Tower::getCost(TowerType::Mage) << " gold)";
+    SDL_Color mageColor = (selectedTowerType == TowerType::Mage) ? SDL_Color{0, 0, 128} : color; // Azul oscuro
+    renderText(ss.str(), yOffset, mageColor);
+    
+    // Artillery tower
+    ss.str("");
+    ss << "3: Artillery (" << Tower::getCost(TowerType::Artillery) << " gold)";
+    SDL_Color artilleryColor = (selectedTowerType == TowerType::Artillery) ? SDL_Color{128, 64, 0} : color; // Marrón
+    renderText(ss.str(), yOffset, artilleryColor);
+    
+    yOffset += SECTION_SPACING / 2;
+    
+     // =========== TOWER INFO SECTION ===========
     // Only check for tower info if there's enough space left
     if (yOffset < MAX_PANEL_HEIGHT - 100) {
         // Show tower info when hovering over one
@@ -444,23 +429,23 @@ void Game::renderPannel() {
             }
         }
     }
-    
+
     // =========== CONTROLS SECTION ===========
-    // Always show controls at the bottom
     ss.str("");
-    ss << "Controls: 1-3 select tower, W upgrades";
+    ss << "Controls: 1-3 select tower, W upgrades, click to place";
     SDL_Surface* textSurface = TTF_RenderText_Blended_Wrapped(font, ss.str().c_str(), color, CONTENT_WIDTH);
     SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
-    SDL_Rect textRect = {mapSize * 75 + 20, mapSize * 75 - textSurface->h - 15, textSurface->w, textSurface->h};
+    SDL_Rect textRect = {mapSize * 75 + 20, mapSize * 75 - textSurface->h - 45, textSurface->w, textSurface->h}; // Subir el texto
     SDL_RenderCopy(renderer, textTexture, nullptr, &textRect);
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
 }
 
 void Game::renderDefeatScreen() {
-    // Limpiar la pantalla
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Negro
-    SDL_RenderClear(renderer);
+    // Dibujar un fondo semitransparente para oscurecer la pantalla
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128); // Negro semitransparente
+    SDL_Rect overlay = {0, 0, mapSize * 75 + 500, mapSize * 75};
+    SDL_RenderFillRect(renderer, &overlay);
 
     // Mostrar mensaje de derrota
     SDL_Color color = {255, 0, 0}; // Rojo
@@ -480,6 +465,7 @@ void Game::renderDefeatScreen() {
     while (true) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT || (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
+                running = false; // Detener el juego
                 return;
             }
         }

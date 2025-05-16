@@ -134,7 +134,7 @@ void Tower::update(std::vector<std::unique_ptr<Enemy>>& enemies, std::vector<std
 void Tower::render(SDL_Renderer* renderer, bool isSelected) {
     // Renderizar la torreta
     switch (type) {
-        case TowerType::Archer: SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); break;
+        case TowerType::Archer: SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255); break;
         case TowerType::Mage: SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255); break;
         case TowerType::Artillery: SDL_SetRenderDrawColor(renderer, 255, 165, 0, 255); break;
     }
