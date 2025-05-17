@@ -3,8 +3,8 @@
 #include <vector>
 
 //Definimos el numero de filas y columnas
-#define ROW 16
-#define COL 16
+#define ROW 14
+#define COL 14
 
 //Creamos un shortcut para int, int 
 typedef std::pair<int,int> Pair;
